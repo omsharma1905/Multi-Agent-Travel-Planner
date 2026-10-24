@@ -1,0 +1,2 @@
+CREATE TYPE "public"."transport_preference" AS ENUM('auto', 'flight', 'train', 'bus', 'car');--> statement-breakpoint
+ALTER TABLE "trip_preferences" ADD COLUMN "transport_preference" "transport_preference" DEFAULT 'auto' NOT NULL;

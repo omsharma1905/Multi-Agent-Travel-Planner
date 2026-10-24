@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1789591449470,
+      "tag": "0000_last_baron_zemo",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789618324960,
+      "tag": "0001_purple_living_mummy",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790765258472,
+      "tag": "0002_luxuriant_junta",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790825170324,
+      "tag": "0003_jazzy_grim_reaper",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791350738278,
+      "tag": "0004_slim_menace",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791797953268,
+      "tag": "0005_trip_versions_and_password_hash",
+      "breakpoints": true
+    }
+  ]
+}

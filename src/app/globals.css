@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* SafariX Nature-Inspired & Cinematic Palette */
+  --color-forest: #104735;       /* Deep rich forest */
+  --color-forest-deep: #082D23;  /* Dramatic deep forest anchor */
+  --color-forest-light: #165B44; /* Mid forest accent */
+  --color-sage: #DDE8DA;         /* Tactile pale sage */
+  --color-sage-light: #E8F0E6;   /* Pale tinted sage surface */
+  --color-sage-badge: #DDE8DA;   /* Soft sage pill badge */
+  
+  --color-ivory: #F3F0E6;        /* Calming warm paper ivory */
+  --color-ivory-light: #FAF8F2;  /* Bright cream for cards */
+  --color-cream: #EAE6D8;        /* Soft stone cream borders and tracks */
+  
+  --color-charcoal: #082D23;     /* Atmospheric deep forest ink */
+  --color-charcoal-light: #1A3D32;/* Soft forest charcoal */
+  --color-ink-muted: #52645A;    /* Secondary text */
+  --color-ink-faint: #7E9287;    /* Muted label text */
+  
+  --color-coral: #F06C5B;        /* Signature terracotta travel waypoint accent */
+  --color-sun: #E5A83B;          /* Warm golden hour */
+
+  --color-bg-primary: #F3F0E6;
+  --color-bg-elevated: #FAF8F2;
+  --color-bg-ink: #082D23;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scrollbar-gutter: stable;
+  font-size: 16px;
+}
+
+body {
+  background-color: var(--color-bg-primary);
+  color: var(--color-charcoal);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-forest);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+::selection {
+  background-color: var(--color-forest);
+  color: #ffffff;
+}
+
+/* Custom subtle nature scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-cream);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(31, 61, 43, 0.25);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(31, 61, 43, 0.5);
+}
+
+/* Marquee continuous stream styles */
+.marquee-container {
+  display: flex;
+  overflow: hidden;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.marquee-track {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation-play-state: paused !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

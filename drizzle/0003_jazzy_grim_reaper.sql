@@ -1,0 +1,1 @@
+ALTER TABLE "trips" ADD COLUMN "is_saved" boolean DEFAULT false NOT NULL;
