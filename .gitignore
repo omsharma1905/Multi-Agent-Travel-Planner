@@ -41,3 +41,12 @@ coverage/
 # Misc
 .vercel/
 .turbo/
+
+# Temporary & Backup files
+*.bak
+*.tmp
+
+# Video assets (large media distributed via CDN/storage)
+public/videos/*.mp4
+public/videos/*.mov
+public/videos/*.webm
