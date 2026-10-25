@@ -261,6 +261,36 @@ export function AuthProvider({
     [user],
   );
 
+  const deleteAccount = useCallback(
+    async (confirmation: string, password?: string) => {
+      setIsLoading(true);
+      try {
+        const res = await fetch("/api/profile", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+          body: JSON.stringify({ confirmation, password }),
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok || !data.success) {
+          return { success: false, error: data.error || "Failed to delete account." };
+        }
+
+        setUser(null);
+        lastCheckedAtRef.current = Date.now();
+        window.location.href = ROUTES.home;
+        return { success: true };
+      } catch {
+        return { success: false, error: "Network error during account deletion. Please try again." };
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [],
+  );
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -270,9 +300,10 @@ export function AuthProvider({
       signUp,
       signOut,
       updateProfile,
+      deleteAccount,
       revalidateSession,
     }),
-    [user, isLoading, signIn, signUp, signOut, updateProfile, revalidateSession],
+    [user, isLoading, signIn, signUp, signOut, updateProfile, deleteAccount, revalidateSession],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

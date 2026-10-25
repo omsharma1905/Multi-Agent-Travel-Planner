@@ -288,26 +288,85 @@ export const UsersRepository = {
   },
 
   /**
-   * Deletes a user record and immediately clears memory cache.
+   * Permanently deletes a user account and all associated relational data
+   * (trips, preferences, versions) in a single transactional operation.
    */
-  async deleteUser(userId: string): Promise<boolean> {
+  async deleteAccount(userId: string): Promise<boolean> {
     assertProductionAuthGuards();
+
+    // 1. Clear memory user records
     memUsers.delete(userId);
     if (global.__memUsers) {
       global.__memUsers.delete(userId);
     }
+
+    // 2. Clear memory trips and versions for this user
+    if (global.__memTrips) {
+      const userTripIds: string[] = [];
+      for (const [tripId, trip] of global.__memTrips.entries()) {
+        if (trip.userId === userId) {
+          userTripIds.push(tripId);
+          global.__memTrips.delete(tripId);
+        }
+      }
+      if (global.__memTripVersions) {
+        for (const tripId of userTripIds) {
+          global.__memTripVersions.delete(tripId);
+        }
+        for (const [tripId, versions] of global.__memTripVersions.entries()) {
+          if (versions.some((v) => v.userId === userId)) {
+            global.__memTripVersions.delete(tripId);
+          }
+        }
+      }
+    }
+
     if (!isDatabaseConfigured) {
       return true;
     }
+
     try {
-      await db.delete(schema.users).where(eq(schema.users.id, userId));
+      await db.transaction(async (tx) => {
+        // Query user's trips
+        const userTrips = await tx
+          .select({ id: schema.trips.id })
+          .from(schema.trips)
+          .where(eq(schema.trips.userId, userId));
+        const tripIds = userTrips.map((t) => t.id);
+
+        // Delete versions by userId and tripId
+        await tx.delete(schema.tripVersions).where(eq(schema.tripVersions.userId, userId));
+        if (tripIds.length > 0) {
+          for (const tripId of tripIds) {
+            await tx.delete(schema.tripVersions).where(eq(schema.tripVersions.tripId, tripId));
+            await tx.delete(schema.tripPreferences).where(eq(schema.tripPreferences.tripId, tripId));
+          }
+          await tx.delete(schema.trips).where(eq(schema.trips.userId, userId));
+        }
+
+        // Delete user record
+        await tx.delete(schema.users).where(eq(schema.users.id, userId));
+      });
+
       return true;
     } catch (err) {
       if (process.env.NODE_ENV === "production") {
-        throw new Error("PERSISTENCE_ERROR: Failed to delete user from database.");
+        throw new Error("PERSISTENCE_ERROR: Failed to delete user account transactionally.");
       }
-      console.warn("Database deleteUser error:", err);
+      console.warn("Database deleteAccount error, falling back to memory store deletion:", err);
+      try {
+        await db.delete(schema.users).where(eq(schema.users.id, userId));
+      } catch {
+        // ignore
+      }
       return true;
     }
+  },
+
+  /**
+   * Deletes a user record and immediately clears memory cache.
+   */
+  async deleteUser(userId: string): Promise<boolean> {
+    return this.deleteAccount(userId);
   },
 };

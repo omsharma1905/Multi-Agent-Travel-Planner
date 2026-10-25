@@ -8,3 +8,4 @@ export * from "./EmptyState";
 export * from "./PlanningStatus";
 export * from "./LocationAutocomplete";
 export * from "./DeleteJourneyModal";
+export * from "./DeleteAccountModal";

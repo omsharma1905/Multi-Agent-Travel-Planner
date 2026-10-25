@@ -489,6 +489,66 @@ export const TripsRepository = {
       }
     },
 
+    /**
+     * Permanently purges all trips, versions, and preferences belonging to a user.
+     * Transactionally cascades across child entities.
+     */
+    async deleteUserData(userId: string): Promise<boolean> {
+      assertProductionPersistenceGuards();
+
+      // Clear memory store for all trips belonging to this user
+      const userTripIds: string[] = [];
+      for (const [tripId, trip] of memTrips.entries()) {
+        if (trip.userId === userId) {
+          userTripIds.push(tripId);
+          memTrips.delete(tripId);
+          memTripTimestamps.delete(tripId);
+        }
+      }
+      for (const tripId of userTripIds) {
+        memTripVersions.delete(tripId);
+      }
+      for (const [tripId, versions] of memTripVersions.entries()) {
+        if (versions.some((v) => v.userId === userId)) {
+          memTripVersions.delete(tripId);
+        }
+      }
+
+      if (!isDatabaseConfigured) {
+        return true;
+      }
+
+      try {
+        await db.transaction(async (tx) => {
+          const userTrips = await tx
+            .select({ id: schema.trips.id })
+            .from(schema.trips)
+            .where(eq(schema.trips.userId, userId));
+          const tripIds = userTrips.map((t) => t.id);
+
+          // 1. Delete trip versions (both by userId and by tripId)
+          await tx.delete(schema.tripVersions).where(eq(schema.tripVersions.userId, userId));
+
+          if (tripIds.length > 0) {
+            for (const tripId of tripIds) {
+              await tx.delete(schema.tripVersions).where(eq(schema.tripVersions.tripId, tripId));
+              await tx.delete(schema.tripPreferences).where(eq(schema.tripPreferences.tripId, tripId));
+            }
+            // 2. Delete trips
+            await tx.delete(schema.trips).where(eq(schema.trips.userId, userId));
+          }
+        });
+
+        return true;
+      } catch (err) {
+        if (process.env.NODE_ENV === "production") {
+          throw new Error("PERSISTENCE_ERROR: Failed to delete user journeys from database.");
+        }
+        console.warn("Database deleteUserData error, relying on memory store deletion:", err);
+        return true;
+      }
+    },
+
 
     /**
      * Retrieves all trips belonging to the authenticated user.

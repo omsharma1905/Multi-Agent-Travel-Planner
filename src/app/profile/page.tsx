@@ -5,19 +5,22 @@ import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/app/AppShell";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { ROUTES } from "@/lib/constants";
-import { PageHeader } from "@/components/product";
+import { PageHeader, DeleteAccountModal } from "@/components/product";
 import { useToast } from "@/components/ui/Toast";
 
 export default function ProfilePage() {
-  const { user, isAuthenticated, isLoading, updateProfile, signOut } = useAuth();
+  const { user, isAuthenticated, isLoading, updateProfile, signOut, deleteAccount } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
   const [name, setName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
 
   // Sync initial name when user loads
   const [prevUser, setPrevUser] = useState(user);
@@ -99,6 +102,24 @@ export default function ProfilePage() {
       router.replace(ROUTES.signIn);
     } catch {
       setIsSigningOut(false);
+    }
+  };
+
+  const handleDeleteAccount = async (confirmation: string, password?: string) => {
+    setIsDeletingAccount(true);
+    setDeleteErrorMessage(null);
+    try {
+      const res = await deleteAccount(confirmation, password);
+      if (res.success) {
+        setIsDeleteModalOpen(false);
+        toast.success("Your account and associated data have been permanently deleted.");
+      } else {
+        setDeleteErrorMessage(res.error || "Failed to delete account. Please try again.");
+      }
+    } catch {
+      setDeleteErrorMessage("Network error during account deletion. Please try again.");
+    } finally {
+      setIsDeletingAccount(false);
     }
   };
 
@@ -288,6 +309,74 @@ export default function ProfilePage() {
               </button>
             </div>
           </section>
+
+          {/* Danger Zone Section */}
+          <section className="bg-red-500/[0.03] border border-red-500/20 rounded-2xl p-6 sm:p-10 space-y-6 backdrop-blur-sm shadow-sm">
+            <div className="space-y-2 border-b border-red-500/15 pb-4">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-[#DC2626]" />
+                <h3 className="font-mono text-xs uppercase tracking-wider font-bold text-[#DC2626]">
+                  DANGER ZONE
+                </h3>
+              </div>
+              <p className="text-xs text-[#111111]/60">
+                Irreversible actions regarding your SafariX identity and stored travel records.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pt-2">
+              <div className="space-y-1 max-w-xl">
+                <p className="text-sm font-semibold text-[#111111]">Delete Account</p>
+                <p className="font-mono text-xs text-[#111111]/70 leading-relaxed">
+                  Permanently delete your account and associated data. This action cannot be undone.
+                </p>
+              </div>
+
+              <button
+                id="open-delete-account-modal-btn"
+                type="button"
+                onClick={() => {
+                  setDeleteErrorMessage(null);
+                  setIsDeleteModalOpen(true);
+                }}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-[#DC2626] bg-[#DC2626] hover:bg-[#b91c1c] text-white font-mono text-xs font-bold uppercase tracking-wider transition-all duration-200 inline-flex items-center justify-center gap-2 shrink-0 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#DC2626] focus:ring-offset-2"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M3 6h18" />
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                  <line x1="10" y1="11" x2="10" y2="17" />
+                  <line x1="14" y1="11" x2="14" y2="17" />
+                </svg>
+                <span>DELETE ACCOUNT</span>
+              </button>
+            </div>
+          </section>
+
+          {/* Safe Confirmation Modal */}
+          <DeleteAccountModal
+            isOpen={isDeleteModalOpen}
+            userEmail={user.email}
+            userName={user.name}
+            isDeleting={isDeletingAccount}
+            errorMessage={deleteErrorMessage}
+            onConfirm={handleDeleteAccount}
+            onCancel={() => {
+              if (!isDeletingAccount) {
+                setIsDeleteModalOpen(false);
+                setDeleteErrorMessage(null);
+              }
+            }}
+          />
         </div>
       </div>
     </AppShell>

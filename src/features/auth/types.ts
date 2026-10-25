@@ -35,6 +35,7 @@ export interface AuthContextValue extends AuthState {
   signUp: (data: SignUpData) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   updateProfile: (data: { name: string }) => Promise<{ success: boolean; user?: User; error?: string }>;
+  deleteAccount: (confirmation: string, password?: string) => Promise<{ success: boolean; error?: string }>;
   revalidateSession: (force?: boolean) => Promise<User | null>;
 }
 
