@@ -56,7 +56,7 @@ export async function middleware(request: NextRequest) {
     if (!isAuthenticated) {
       // Unauthenticated: Redirect to sign-in with return target
       const signInUrl = new URL(ROUTES.signIn, request.url);
-      signInUrl.searchParams.set("redirect", pathname);
+      signInUrl.searchParams.set("redirect", pathname + (request.nextUrl.search || ""));
       const response = NextResponse.redirect(signInUrl);
       response.headers.set("Cache-Control", "private, no-cache, no-store, max-age=0, must-revalidate");
       response.headers.set("Pragma", "no-cache");

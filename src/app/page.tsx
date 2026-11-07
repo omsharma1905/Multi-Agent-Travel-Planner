@@ -1,73 +1,54 @@
 import type { Metadata } from "next";
 import { getAuthenticatedUser } from "@/lib/auth/server";
-import { Navbar } from "@/components/navigation/Navbar";
 import {
-  Hero,
-  HowItWorks,
-  MultiAgentDossierScene,
-  DestinationsGallery,
-  FAQSection,
-  FinalCTA,
-  Footer,
-  LandingOpeningExperience,
-} from "@/components/landing";
-import { ContinuousMarquee } from "@/components/ui/ContinuousMarquee";
+  StitchNavbar,
+  StitchHero,
+  StitchDestinations,
+  StitchMultiAgentSection,
+  StitchWorkflow,
+  StitchFinalCTA,
+  StitchFooter,
+  StitchMobileBottomNav,
+} from "@/components/landing/stitch";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "SafariX — AI Travel Planner",
+  title: "SafariX — Luxury Expeditions & AI Travel Planner",
   description:
-    "SafariX plans complete journeys with transportation, stays, activities, food, and day-by-day itineraries tailored to your trip.",
+    "Turn your travel ideas into verified autonomous itineraries with real sanctuaries, private aviation, Michelin-curated dining, and transparent live budgets.",
 };
 
-/**
- * SafariX — Commercial Travel Brand Landing Page (Phase 18.2 Spatial Interaction & Compressed Flow).
- *
- * 5 Streamlined Primary Scenes:
- * Scene 0: OPENING EXPERIENCE — Multilingual "Hello" sequence across 10 global scripts + Early Access Notice
- * Scene 1: HERO — Centered atmospheric twilight hero with cursor-reactive 3D tablet mockup & depth tilt
- * Scene 2: THE JOURNEY IN MOTION — Compact 3-step editorial journey with boutique stay photography
- * Scene 3: MULTI-AGENT PLANNING & DOSSIER — Unified agent features + interactive digital boarding pass & route waypoints
- * Scene 4: DESTINATION GALLERY — Asymmetric Kyoto anchor & top expedition cards
- * Scene 5: CLARITY, CTA & FOOTER — Accordion FAQ, sunset closing CTA, and luxury brand footer
- */
 export default async function HomePage() {
   const user = await getAuthenticatedUser();
 
   return (
-    <div className="relative min-h-screen bg-[#F3F0E6] text-[#104735] overflow-x-hidden selection:bg-[#104735] selection:text-[#F3F0E6]">
-      {/* 00. Multilingual Opening Curtain + Early Access Notice */}
-      <LandingOpeningExperience />
+    <div className="relative min-h-screen bg-surface text-on-surface overflow-x-hidden selection:bg-secondary/30 selection:text-secondary pb-16 md:pb-0">
+      {/* Floating Glassmorphic Header */}
+      <StitchNavbar initialUser={user} />
 
-      {/* Floating Travel Brand Navigation (Synchronized with verified server session) */}
-      <Navbar initialUser={user} />
+      <main id="main-content" className="flex flex-col w-full">
+        {/* Hero with Ha Long Bay Parallax and 3D Elevated Planning Console */}
+        <StitchHero />
 
-      <main id="main-content">
-        {/* Scene 1: Centered Hero with Cursor-Reactive 3D Tablet Mockup */}
-        <Hero />
+        {/* Curated Sanctuaries Section (Interactive 3D Cards) */}
+        <StitchDestinations />
 
-        {/* Scene 2: The Journey in Motion (Compact 3-Step Editorial & Mobile Mockup) */}
-        <HowItWorks />
+        {/* Multi-Agent Swarm & Live Master Itinerary */}
+        <StitchMultiAgentSection />
 
-        {/* Scene 3: Multi-Agent Planning & Journey Dossier (Unified Features + Live Digital Dossier) */}
-        <MultiAgentDossierScene />
+        {/* 4-Step Intuitive Workflow */}
+        <StitchWorkflow />
 
-        {/* Scene 4: Inspire Your Adventure (Asymmetric Destination Gallery) */}
-        <DestinationsGallery />
-
-        {/* Continuous Luxury Expedition Ribbon */}
-        <ContinuousMarquee />
-
-        {/* Scene 5: Have Questions? (FAQ Accordion) */}
-        <FAQSection />
-
-        {/* Final Cinematic Sunset CTA */}
-        <FinalCTA />
+        {/* Final Cinematic Panoramic CTA */}
+        <StitchFinalCTA />
       </main>
 
       {/* Brand Footer */}
-      <Footer />
+      <StitchFooter />
+
+      {/* Mobile Fixed Glass Bottom Navigation */}
+      <StitchMobileBottomNav />
     </div>
   );
 }

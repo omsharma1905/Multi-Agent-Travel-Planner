@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/app/AppShell";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { ROUTES } from "@/lib/constants";
@@ -81,22 +81,82 @@ const AVAILABLE_INTERESTS = [
   "Scenic Road Trips",
 ];
 
-export default function NewTripPage() {
+function parseInitialDays(searchParams: ReturnType<typeof useSearchParams>): string {
+  const depStr = searchParams.get("departure");
+  const retStr = searchParams.get("return");
+  if (depStr && retStr) {
+    const d1 = new Date(depStr).getTime();
+    const d2 = new Date(retStr).getTime();
+    if (!isNaN(d1) && !isNaN(d2) && d2 > d1) {
+      const diff = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+      if (diff >= 1 && diff <= 30) return String(diff);
+    }
+  }
+  const daysParam = searchParams.get("days");
+  if (daysParam) {
+    const d = parseInt(daysParam, 10);
+    if (!isNaN(d) && d >= 1 && d <= 30) return String(d);
+  }
+  return "7";
+}
+
+function parseInitialBudget(searchParams: ReturnType<typeof useSearchParams>): BudgetTier {
+  const tierParam = (searchParams.get("tier") || searchParams.get("budget") || "").toLowerCase();
+  if (tierParam.includes("luxury") || tierParam.includes("sovereign") || tierParam.includes("signature") || tierParam.includes("10k")) {
+    return "luxury";
+  }
+  if (tierParam.includes("premium") || tierParam.includes("elevated") || tierParam.includes("5k")) {
+    return "premium";
+  }
+  if (tierParam.includes("budget") || tierParam.includes("essential")) {
+    return "budget";
+  }
+  if (tierParam.includes("moderate") || tierParam.includes("comfort")) {
+    return "moderate";
+  }
+  return "moderate";
+}
+
+function parseInitialTransport(searchParams: ReturnType<typeof useSearchParams>): TransportPreference {
+  const typeParam = (searchParams.get("type") || "").toLowerCase();
+  if (typeParam.includes("flight")) return "flight";
+  if (typeParam.includes("train")) return "train";
+  if (typeParam.includes("car") || typeParam.includes("road")) return "car";
+  if (typeParam.includes("bus")) return "bus";
+  return "auto";
+}
+
+function parseInitialTravelers(searchParams: ReturnType<typeof useSearchParams>): string {
+  const raw = searchParams.get("partySize") || searchParams.get("travelers");
+  if (raw) {
+    const match = raw.match(/\d+/);
+    if (match) {
+      const num = parseInt(match[0], 10);
+      if (num >= 1 && num <= 10) return String(num);
+    }
+  }
+  return "2";
+}
+
+function NewTripContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user: _user } = useAuth();
   const toast = useToast();
 
-  const [origin, setOrigin] = useState("");
-  const [destination, setDestination] = useState("");
-  const [days, setDays] = useState("7");
-  const [travelers, setTravelers] = useState("2");
-  const [budget, setBudget] = useState<BudgetTier>("moderate");
-  const [transportPreference, setTransportPreference] = useState<TransportPreference>("auto");
+  const [origin, setOrigin] = useState(() => searchParams.get("origin") || "");
+  const [destination, setDestination] = useState(() => searchParams.get("destination") || searchParams.get("dest") || "");
+  const [days, setDays] = useState(() => parseInitialDays(searchParams));
+  const [travelers, setTravelers] = useState(() => parseInitialTravelers(searchParams));
+  const [budget, setBudget] = useState<BudgetTier>(() => parseInitialBudget(searchParams));
+  const [transportPreference, setTransportPreference] = useState<TransportPreference>(() => parseInitialTransport(searchParams));
   const [interests, setInterests] = useState<string[]>([
     "Culture & Arts",
     "Food & Wine",
   ]);
   const [notes, setNotes] = useState("");
+
+
 
   const [step, setStep] = useState<"intake" | "review">("intake");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -929,5 +989,22 @@ export default function NewTripPage() {
         </div>
       </div>
     </AppShell>
+  );
+}
+
+export default function NewTripPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#F3F0E6] flex items-center justify-center">
+          <div className="flex items-center gap-2 text-[#104735]">
+            <span className="material-symbols-outlined animate-spin text-2xl">refresh</span>
+            <span className="font-mono text-sm tracking-widest uppercase">Loading Planner...</span>
+          </div>
+        </div>
+      }
+    >
+      <NewTripContent />
+    </Suspense>
   );
 }

@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: "class",
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -10,7 +11,68 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // SafariX Nature-Inspired & Cinematic Color System
+        // --- Stitch Design System (Wilderness Luxury & Intelligence) ---
+        surface: "#121414",
+        "surface-dim": "#121414",
+        "surface-bright": "#383939",
+        "surface-container-lowest": "#0c0f0e",
+        "surface-container-low": "#1a1c1c",
+        "surface-container": "#1e2020",
+        "surface-container-high": "#282a2a",
+        "surface-container-highest": "#333535",
+        "surface-variant": "#333535",
+        "on-surface": "#e2e2e2",
+        "on-surface-variant": "#c1c8c5",
+        "inverse-surface": "#e2e2e2",
+        "inverse-on-surface": "#2f3130",
+        background: "#121414",
+        "on-background": "#e2e2e2",
+        outline: "#8b928f",
+        "outline-variant": "#414846",
+        "surface-tint": "#afcdc4",
+
+        primary: {
+          DEFAULT: "#afcdc4",
+          container: "#0e2a24",
+          fixed: "#cae9df",
+          "fixed-dim": "#afcdc4",
+        },
+        "on-primary": "#1a352f",
+        "on-primary-container": "#76928a",
+        "on-primary-fixed": "#03201a",
+        "on-primary-fixed-variant": "#314c45",
+        "inverse-primary": "#48645c",
+
+        secondary: {
+          DEFAULT: "#e9c349",
+          container: "#af8d11",
+          fixed: "#ffe088",
+          "fixed-dim": "#e9c349",
+        },
+        "on-secondary": "#3c2f00",
+        "on-secondary-container": "#342800",
+        "on-secondary-fixed": "#241a00",
+        "on-secondary-fixed-variant": "#574500",
+
+        tertiary: {
+          DEFAULT: "#b5cbc9",
+          container: "#162928",
+          fixed: "#d1e7e5",
+          "fixed-dim": "#b5cbc9",
+        },
+        "on-tertiary": "#213433",
+        "on-tertiary-container": "#7c918f",
+        "on-tertiary-fixed": "#0b1f1e",
+        "on-tertiary-fixed-variant": "#374a49",
+
+        error: {
+          DEFAULT: "#ffb4ab",
+          container: "#93000a",
+        },
+        "on-error": "#690005",
+        "on-error-container": "#ffdad6",
+
+        // --- Backward Compatibility Colors for Existing App Shell & Feature Pages ---
         charcoal: {
           DEFAULT: "#171A18",
           deep: "#0F1210",
@@ -57,57 +119,65 @@ const config: Config = {
           charcoal: "#171A18",
         },
         veora: {
-          blue: "#1F3D2B", // Mapped to primary forest for seamless backward compatibility
+          blue: "#1F3D2B",
           sky: "#8CC8FF",
           coral: "#E0604E",
           sun: "#E5A83B",
           forest: "#1F3D2B",
         },
       },
+      spacing: {
+        margin: "3rem",
+        "margin-mobile": "1.25rem",
+        gutter: "1.5rem",
+        "gutter-mobile": "1rem",
+        "space-xs": "0.25rem",
+        "space-sm": "0.5rem",
+        "space-md": "1rem",
+        "space-lg": "1.5rem",
+        "space-xl": "2.5rem",
+        "space-2xl": "4rem",
+      },
+      borderRadius: {
+        DEFAULT: "1rem",
+        lg: "2rem",
+        xl: "3rem",
+        full: "9999px",
+      },
       fontFamily: {
-        sans: ["var(--font-display)", "var(--font-sans)", "system-ui", "-apple-system", "sans-serif"],
-        display: ["var(--font-display)", "var(--font-sans)", "system-ui", "sans-serif"],
-        serif: ["var(--font-serif)", "Playfair Display", "Georgia", "serif"],
+        sans: ["var(--font-display)", "Plus Jakarta Sans", "system-ui", "-apple-system", "sans-serif"],
+        display: ["var(--font-display)", "Plus Jakarta Sans", "system-ui", "sans-serif"],
+        serif: ["var(--font-serif)", "var(--font-newsreader)", "Newsreader", "Playfair Display", "serif"],
+        newsreader: ["var(--font-newsreader)", "Newsreader", "Playfair Display", "serif"],
         mono: ["JetBrains Mono", "monospace"],
+        "headline-md": ["var(--font-newsreader)", "Newsreader", "serif"],
+        "headline-lg": ["var(--font-newsreader)", "Newsreader", "serif"],
+        "headline-xl": ["var(--font-newsreader)", "Newsreader", "serif"],
+        "display-lg": ["var(--font-newsreader)", "Newsreader", "serif"],
+        "title-lg": ["var(--font-display)", "Plus Jakarta Sans", "sans-serif"],
+        "title-md": ["var(--font-display)", "Plus Jakarta Sans", "sans-serif"],
+        "body-lg": ["var(--font-display)", "Plus Jakarta Sans", "sans-serif"],
+        "body-md": ["var(--font-display)", "Plus Jakarta Sans", "sans-serif"],
+        "label-md": ["var(--font-display)", "Plus Jakarta Sans", "sans-serif"],
+        "label-sm": ["var(--font-display)", "Plus Jakarta Sans", "sans-serif"],
       },
       fontSize: {
-        // Controlled, sophisticated type scale (no excessive massive slabs)
+        "display-lg": ["56px", { lineHeight: "64px", letterSpacing: "-0.02em", fontWeight: "400" }],
+        "display-lg-mobile": ["36px", { lineHeight: "44px", letterSpacing: "-0.01em", fontWeight: "400" }],
+        "headline-xl": ["40px", { lineHeight: "48px", letterSpacing: "-0.015em", fontWeight: "500" }],
+        "headline-xl-mobile": ["28px", { lineHeight: "36px", letterSpacing: "0em", fontWeight: "500" }],
+        "headline-lg": ["32px", { lineHeight: "40px", fontWeight: "500" }],
+        "headline-md": ["24px", { lineHeight: "32px", fontWeight: "600" }],
+        "title-lg": ["20px", { lineHeight: "28px", fontWeight: "600" }],
+        "title-md": ["16px", { lineHeight: "24px", fontWeight: "600" }],
+        "body-lg": ["16px", { lineHeight: "26px", fontWeight: "400" }],
+        "body-md": ["14px", { lineHeight: "22px", fontWeight: "400" }],
+        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.04em", fontWeight: "600" }],
+        "label-sm": ["10px", { lineHeight: "14px", letterSpacing: "0.08em", fontWeight: "700" }],
+
+        // Standard scaling clamp tokens
         "display-2xl": ["clamp(2.5rem, 6.5vw, 5.25rem)", { lineHeight: "0.96", letterSpacing: "-0.03em" }],
-        "display-xl":  ["clamp(2rem, 5vw, 4rem)",         { lineHeight: "1.0", letterSpacing: "-0.025em" }],
-        "display-lg":  ["clamp(1.75rem, 3.8vw, 3rem)",    { lineHeight: "1.06", letterSpacing: "-0.02em" }],
-        "display-md":  ["clamp(1.35rem, 2.5vw, 2.15rem)", { lineHeight: "1.15", letterSpacing: "-0.015em" }],
-        "display-sm":  ["clamp(1.1rem, 1.8vw, 1.5rem)",   { lineHeight: "1.25" }],
-      },
-      spacing: {
-        "page-x": "clamp(1.25rem, 5vw, 5rem)",
-        "page-y": "clamp(3.5rem, 8vh, 7rem)",
-        "section": "clamp(4.5rem, 9vh, 8rem)",
-      },
-      keyframes: {
-        "marquee-left": {
-          "0%": { transform: "translateX(0%)" },
-          "100%": { transform: "translateX(-50%)" },
-        },
-        "marquee-right": {
-          "0%": { transform: "translateX(-50%)" },
-          "100%": { transform: "translateX(0%)" },
-        },
-      },
-      animation: {
-        "marquee-left-fast": "marquee-left 24s linear infinite",
-        "marquee-left": "marquee-left 36s linear infinite",
-        "marquee-left-slow": "marquee-left 52s linear infinite",
-        "marquee-right-fast": "marquee-right 26s linear infinite",
-        "marquee-right": "marquee-right 38s linear infinite",
-        "marquee-right-slow": "marquee-right 54s linear infinite",
-      },
-      screens: {
-        xs: "480px",
-        sm: "640px",
-        md: "768px",
-        lg: "1024px",
-        xl: "1280px",
-        "2xl": "1536px",
+        "display-sm": ["clamp(1.1rem, 1.8vw, 1.5rem)", { lineHeight: "1.25" }],
       },
     },
   },

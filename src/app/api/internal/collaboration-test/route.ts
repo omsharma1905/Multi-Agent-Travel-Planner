@@ -57,7 +57,7 @@ export interface CollaborationTestCaseResult {
   details?: unknown;
 }
 
-export async function runAllCollaborationTests(): Promise<CollaborationTestCaseResult[]> {
+async function runAllCollaborationTests(): Promise<CollaborationTestCaseResult[]> {
   const results: CollaborationTestCaseResult[] = [];
 
   const baseTrip: TripWithPreferences = {

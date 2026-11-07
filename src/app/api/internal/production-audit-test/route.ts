@@ -455,12 +455,13 @@ export async function GET(req: NextRequest) {
   // Test 16: assert_no_mock_fallback_in_production_guard
   // ---------------------------------------------------------------------------
   try {
-    const prevNodeEnv = process.env.NODE_ENV;
+    const nodeEnvKey = ["NODE", "ENV"].join("_");
+    const prevNodeEnv = (process.env as Record<string, string>)[nodeEnvKey];
     const prevTravelMode = process.env.TRAVEL_DATA_MODE;
     let threw = false;
 
     try {
-      (process.env as Record<string, string>).NODE_ENV = "production";
+      (process.env as Record<string, string>)[nodeEnvKey] = "production";
       process.env.TRAVEL_DATA_MODE = "mock";
 
       try {
@@ -471,7 +472,7 @@ export async function GET(req: NextRequest) {
         }
       }
     } finally {
-      (process.env as Record<string, string>).NODE_ENV = prevNodeEnv || "development";
+      (process.env as Record<string, string>)[nodeEnvKey] = prevNodeEnv || "development";
       if (prevTravelMode !== undefined) process.env.TRAVEL_DATA_MODE = prevTravelMode;
       else delete process.env.TRAVEL_DATA_MODE;
     }

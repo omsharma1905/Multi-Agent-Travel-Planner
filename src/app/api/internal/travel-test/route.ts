@@ -39,7 +39,7 @@ export interface TestCaseResult {
   details?: unknown;
 }
 
-export async function runAllTravelTests(): Promise<TestCaseResult[]> {
+async function runAllTravelTests(): Promise<TestCaseResult[]> {
   await travelCache.clear();
   const results: TestCaseResult[] = [];
 

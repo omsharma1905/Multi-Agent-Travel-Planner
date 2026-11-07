@@ -87,7 +87,7 @@ function makeTestStay(
   };
 }
 
-export async function runAllStayTests(): Promise<StayTestCaseResult[]> {
+async function runAllStayTests(): Promise<StayTestCaseResult[]> {
   const results: StayTestCaseResult[] = [];
   const mockProvider = new MockStayProvider();
 

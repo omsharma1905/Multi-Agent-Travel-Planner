@@ -4,6 +4,7 @@ import "./globals.css";
 import { APP_NAME } from "@/lib/constants";
 import { CustomCursor } from "@/components/ui/CustomCursor";
 import { AuthProvider } from "@/features/auth/provider/AuthProvider";
+import { ToastProvider } from "@/components/ui/Toast";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -33,12 +34,12 @@ const appUrl =
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: `${APP_NAME} — AI Travel Planner`,
+    default: `${APP_NAME} — Luxury Expeditions & AI Travel Planner`,
     template: `%s — ${APP_NAME}`,
   },
   description:
-    "SafariX plans complete journeys with transportation, stays, activities, food, and day-by-day itineraries tailored to your trip.",
-  keywords: ["SafariX", "AI travel planner", "journey planner", "intelligent travel", "bespoke itineraries"],
+    "SafariX plans bespoke luxury journeys with transportation, handpicked sanctuaries, activities, Michelin-curated dining, and autonomous multi-agent orchestration.",
+  keywords: ["SafariX", "AI travel planner", "journey planner", "luxury expeditions", "bespoke itineraries", "autonomous travel"],
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -52,9 +53,9 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     siteName: APP_NAME,
-    title: `${APP_NAME} — AI Travel Planner`,
+    title: `${APP_NAME} — Luxury Expeditions & AI Travel Planner`,
     description:
-      "SafariX plans complete journeys with transportation, stays, activities, food, and day-by-day itineraries tailored to your trip.",
+      "SafariX plans bespoke luxury journeys with transportation, handpicked sanctuaries, activities, Michelin-curated dining, and autonomous multi-agent orchestration.",
     images: [
       {
         url: "/og/safarix.png",
@@ -66,9 +67,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: `${APP_NAME} — AI Travel Planner`,
+    title: `${APP_NAME} — Luxury Expeditions & AI Travel Planner`,
     description:
-      "SafariX plans complete journeys with transportation, stays, activities, food, and day-by-day itineraries tailored to your trip.",
+      "SafariX plans bespoke luxury journeys with transportation, handpicked sanctuaries, activities, Michelin-curated dining, and autonomous multi-agent orchestration.",
     images: ["/og/safarix.png"],
   },
 };
@@ -76,10 +77,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#082D23",
+  themeColor: "#0E2A24",
 };
-
-import { ToastProvider } from "@/components/ui/Toast";
 
 interface RootLayoutProps {
   children: React.ReactNode;
@@ -90,10 +89,10 @@ export default function RootLayout({ children }: RootLayoutProps) {
     <html
       lang="en"
       data-scroll-behavior="smooth"
-      className={`${inter.variable} ${plusJakarta.variable} ${playfair.variable}`}
+      className={`${inter.variable} ${plusJakarta.variable} ${playfair.variable} dark`}
       suppressHydrationWarning
     >
-      <body className="font-display bg-[#F3F0E6] text-[#082D23] antialiased selection:bg-[#104735] selection:text-[#F3F0E6]">
+      <body className="font-sans bg-surface text-on-surface antialiased selection:bg-secondary/30 selection:text-secondary">
         {/* SafariX Custom Cursor (active on desktop / fine pointers only) */}
         <CustomCursor />
 

@@ -83,7 +83,7 @@ function makeTestPlace(
   };
 }
 
-export async function runAllPlaceTests(): Promise<PlaceTestCaseResult[]> {
+async function runAllPlaceTests(): Promise<PlaceTestCaseResult[]> {
   const results: PlaceTestCaseResult[] = [];
   const mockProvider = new MockPlaceProvider();
 

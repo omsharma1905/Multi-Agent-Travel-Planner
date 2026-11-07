@@ -10,6 +10,7 @@ import { DEMO_USER } from "../provider/dev-auth-provider";
 import { ROUTES } from "@/lib/constants";
 import { SafariXMark } from "@/components/navigation/Logo";
 import { useToast } from "@/components/ui/Toast";
+import { StitchIcon } from "@/components/landing/stitch/StitchIcon";
 
 interface AuthCardProps {
   initialMode?: "sign-in" | "sign-up";
@@ -109,7 +110,7 @@ export function AuthCard({ initialMode = "sign-in" }: AuthCardProps) {
     setSignInError(null);
     setSignInErrors({});
 
-    const validation = signInSchema.safeParse(signInData);
+    const validation = signInSchema.safeParse({ email: signInData.email.trim(), password: signInData.password });
     if (!validation.success) {
       const fieldErrors: Partial<Record<keyof SignInInput, string>> = {};
       for (const issue of validation.error.issues) {
@@ -196,7 +197,7 @@ export function AuthCard({ initialMode = "sign-in" }: AuthCardProps) {
       </div>
 
       {/* Main Authentication Card */}
-      <div className="relative w-full rounded-2xl bg-[#F4F1E5] border border-white/15 shadow-[0_35px_90px_-20px_rgba(0,0,0,0.95)] overflow-hidden min-h-[540px] md:h-[530px] lg:h-[540px]">
+      <div className="relative w-full rounded-2xl md:bg-[#F4F1E5] bg-[#0c1311] border border-white/10 md:border-white/15 shadow-[0_35px_90px_-20px_rgba(0,0,0,0.95)] overflow-hidden md:h-[530px] lg:h-[540px]">
         {/* ========================================================================= */}
         {/* DESKTOP VIEW: Landscape Diagonal Split with Sweeping Motion Panel          */}
         {/* ========================================================================= */}
@@ -648,135 +649,181 @@ export function AuthCard({ initialMode = "sign-in" }: AuthCardProps) {
         </motion.div>
 
         {/* ========================================================================= */}
-        {/* MOBILE VIEW: Compact Responsive Stack with Segment Switcher               */}
+        {/* MOBILE VIEW: Premium Immersive Experience with Segment Switcher           */}
         {/* ========================================================================= */}
-        <div className="flex md:hidden flex-col w-full h-full">
-          {/* Top Green Banner */}
-          <div className="bg-[#063D2E] text-[#F4F1E5] p-6 relative overflow-hidden">
-            <div className="flex items-center justify-between mb-4">
+        <div className="flex md:hidden flex-col w-full text-[#FBFBFA]">
+          {/* Top Decorative Ambient Glow */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[#0E2A24]/60 blur-3xl rounded-full pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#D4AF37]/10 blur-2xl rounded-full pointer-events-none" />
+
+          {/* Branded Mobile Header */}
+          <div className="p-5 sm:p-6 pb-4 relative z-10 border-b border-white/10 bg-[#081C1B]/80 backdrop-blur-md">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <SafariXMark size={20} className="text-[#F4F1E5]" />
-                <span className="font-display font-bold tracking-wider uppercase text-sm text-[#F4F1E5]">
-                  SafariX
+                <span className="w-7 h-7 rounded-full bg-[#0E2A24] border border-[#E9C349]/40 flex items-center justify-center text-[#E9C349]">
+                  <StitchIcon name="explore" className="w-3.5 h-3.5" />
+                </span>
+                <span className="font-headline-md text-lg tracking-tight text-[#FBFBFA]">
+                  SAFARI<span className="text-[#E9C349]">X</span>
+                </span>
+                <span className="font-mono text-[9px] uppercase tracking-widest text-[#E9C349]/80 bg-[#0E2A24] px-2 py-0.5 rounded-full border border-[#E9C349]/20 ml-1">
+                  PORTAL
                 </span>
               </div>
               {process.env.NODE_ENV !== "production" && (
                 <button
                   type="button"
                   onClick={handleQuickFillDemo}
-                  className="font-mono text-[10px] uppercase tracking-wider text-emerald-200 underline"
+                  className="font-mono text-[10px] uppercase tracking-wider text-[#E9C349] hover:underline px-2 py-1 rounded bg-white/5 border border-white/10"
                 >
                   Demo Fill
                 </button>
               )}
             </div>
 
-            <h3 className="font-display text-2xl font-bold tracking-tight text-[#F4F1E5] leading-tight">
-              {isSignUp ? (
-                <>
-                  Start your{" "}
-                  <span className="font-serif italic font-normal text-emerald-200">
-                    next journey.
-                  </span>
-                </>
-              ) : (
-                <>
-                  Welcome{" "}
-                  <span className="font-serif italic font-normal text-emerald-200">
-                    back.
-                  </span>
-                </>
-              )}
-            </h3>
-            <p className="text-xs text-[#F4F1E5]/75 mt-1 font-light">
-              {isSignUp
-                ? "Create your account for personalized journeys."
-                : "Your next adventure is waiting."}
-            </p>
+            {/* Travel Coordinates Watermark */}
+            <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.2em] text-[#FBFBFA]/40 mb-3">
+              <span>EXPEDITION ARCHIVE</span>
+              <span>20.84° N · 107.04° E</span>
+            </div>
+
+            {/* Welcome Heading & Message */}
+            <motion.div
+              initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-1"
+            >
+              <h3 className="font-display text-2xl font-bold tracking-tight text-[#FBFBFA] leading-tight">
+                {isSignUp ? (
+                  <>
+                    Start your{" "}
+                    <span className="font-serif italic font-normal text-[#E9C349]">
+                      next journey.
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    Welcome{" "}
+                    <span className="font-serif italic font-normal text-[#E9C349]">
+                      back.
+                    </span>
+                  </>
+                )}
+              </h3>
+              <p className="text-xs text-[#FBFBFA]/70 leading-relaxed font-light">
+                {isSignUp
+                  ? "Create your account for personalized sanctuaries, itineraries & agent orchestration."
+                  : "Access your saved expeditions and synchronized agent travel dossiers."}
+              </p>
+            </motion.div>
 
             {/* Segment Toggle */}
-            <div className="mt-4 grid grid-cols-2 rounded-lg bg-black/25 p-1 text-center font-mono text-xs uppercase tracking-wider">
+            <div className="mt-4 grid grid-cols-2 rounded-full bg-black/40 p-1 border border-white/10 text-center font-mono text-xs uppercase tracking-wider relative shadow-inner">
               <button
                 type="button"
                 data-testid="mobile-tab-signin"
                 onClick={handleSwitchToSignIn}
-                className={`py-1.5 rounded-md transition-all font-semibold ${
+                className={`py-2 rounded-full transition-all font-semibold flex items-center justify-center gap-1.5 ${
                   !isSignUp
-                    ? "bg-[#F4F1E5] text-[#063D2E] shadow"
-                    : "text-[#F4F1E5]/70 hover:text-white"
+                    ? "bg-gradient-to-r from-[#D4AF37] to-[#E9C349] text-[#081C1B] shadow-md"
+                    : "text-[#FBFBFA]/70 hover:text-white"
                 }`}
               >
-                Sign in
+                <span>Sign in</span>
               </button>
               <button
                 type="button"
                 data-testid="mobile-tab-signup"
                 onClick={handleSwitchToSignUp}
-                className={`py-1.5 rounded-md transition-all font-semibold ${
+                className={`py-2 rounded-full transition-all font-semibold flex items-center justify-center gap-1.5 ${
                   isSignUp
-                    ? "bg-[#F4F1E5] text-[#063D2E] shadow"
-                    : "text-[#F4F1E5]/70 hover:text-white"
+                    ? "bg-gradient-to-r from-[#D4AF37] to-[#E9C349] text-[#081C1B] shadow-md"
+                    : "text-[#FBFBFA]/70 hover:text-white"
                 }`}
               >
-                Sign up
+                <span>Sign up</span>
               </button>
             </div>
           </div>
 
-          {/* Form Content in Ivory */}
-          <div className="p-6 bg-[#F4F1E5] text-[#063D2E] flex-1">
+          {/* Form Content in Deep Teal Glass */}
+          <div className="p-5 sm:p-6 relative z-10 flex-1">
             {!isSignUp ? (
               /* Mobile Sign In Form */
-              <form onSubmit={handleSignInSubmit} noValidate className="space-y-4">
+              <motion.form
+                key="mobile-signin"
+                initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25 }}
+                onSubmit={handleSignInSubmit}
+                noValidate
+                className="space-y-4"
+              >
                 {signInError && (
                   <div
                     role="alert"
-                    className="rounded-lg border border-red-500/25 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-700"
+                    className="rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs font-medium text-red-200 flex items-center gap-2"
                   >
-                    {signInError}
+                    <span className="w-4 h-4 rounded-full bg-red-500/30 flex items-center justify-center text-[10px] font-bold">!</span>
+                    <span>{signInError}</span>
                   </div>
                 )}
+
                 <div>
                   <label
                     htmlFor="mobile-signin-email"
-                    className="block font-mono text-[11px] font-semibold uppercase tracking-wider text-[#063D2E]/80 mb-1"
+                    className="block font-mono text-[11px] font-semibold uppercase tracking-wider text-[#FBFBFA]/75 mb-1.5"
                   >
                     Email address
                   </label>
-                  <input
-                    id="mobile-signin-email"
-                    type="email"
-                    autoComplete="email"
-                    value={signInData.email}
-                    onChange={(e) => setSignInData((prev) => ({ ...prev, email: e.target.value }))}
-                    disabled={isSubmittingSignIn}
-                    placeholder="traveler@safarix.com"
-                    className="w-full rounded-lg border border-[#063D2E]/20 bg-white/80 px-3.5 py-2 text-sm text-[#063D2E] focus:outline-none focus:ring-1 focus:ring-[#063D2E]"
-                  />
+                  <div className="relative flex items-center rounded-xl border border-white/15 bg-white/5 focus-within:bg-white/10 focus-within:border-[#E9C349] focus-within:ring-2 focus-within:ring-[#E9C349]/20 transition-all px-3.5 min-h-[46px]">
+                    <StitchIcon name="mail" className="w-4 h-4 text-[#E9C349]/70 flex-shrink-0" />
+                    <input
+                      id="mobile-signin-email"
+                      type="email"
+                      autoComplete="email"
+                      value={signInData.email}
+                      onChange={(e) => setSignInData((prev) => ({ ...prev, email: e.target.value }))}
+                      disabled={isSubmittingSignIn}
+                      placeholder="traveler@safarix.com"
+                      className="w-full bg-transparent text-sm text-[#FBFBFA] placeholder:text-[#FBFBFA]/30 outline-none pl-2.5"
+                    />
+                  </div>
                   {signInErrors.email && (
-                    <p className="mt-1 font-mono text-[11px] text-red-600">{signInErrors.email}</p>
+                    <p className="mt-1 font-mono text-[11px] text-red-400 pl-1">{signInErrors.email}</p>
                   )}
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center justify-between mb-1.5">
                     <label
                       htmlFor="mobile-signin-password"
-                      className="block font-mono text-[11px] font-semibold uppercase tracking-wider text-[#063D2E]/80"
+                      className="block font-mono text-[11px] font-semibold uppercase tracking-wider text-[#FBFBFA]/75"
                     >
                       Password
                     </label>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        toast.info("Password Recovery", "Instructions sent to registered email.")
-                      }
-                      className="font-mono text-[10px] text-[#063D2E]/70 underline"
-                    >
-                      Forgot?
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={handleQuickFillDemo}
+                        className="font-mono text-[10px] text-[#E9C349]/80 hover:text-[#E9C349] tracking-wider underline underline-offset-2"
+                      >
+                        Demo Fill
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          toast.info("Password Recovery", "Instructions sent to registered email.")
+                        }
+                        className="font-mono text-[10px] text-[#E9C349] hover:underline tracking-wider"
+                      >
+                        Forgot?
+                      </button>
+                    </div>
                   </div>
-                  <div className="relative">
+                  <div className="relative flex items-center rounded-xl border border-white/15 bg-white/5 focus-within:bg-white/10 focus-within:border-[#E9C349] focus-within:ring-2 focus-within:ring-[#E9C349]/20 transition-all px-3.5 min-h-[46px]">
+                    <StitchIcon name="lock" className="w-4 h-4 text-[#E9C349]/70 flex-shrink-0" />
                     <input
                       id="mobile-signin-password"
                       type={showSignInPassword ? "text" : "password"}
@@ -787,19 +834,19 @@ export function AuthCard({ initialMode = "sign-in" }: AuthCardProps) {
                       }
                       disabled={isSubmittingSignIn}
                       placeholder="••••••••"
-                      className="w-full rounded-lg border border-[#063D2E]/20 bg-white/80 px-3.5 py-2 pr-10 text-sm text-[#063D2E] focus:outline-none focus:ring-1 focus:ring-[#063D2E]"
+                      className="w-full bg-transparent text-sm text-[#FBFBFA] placeholder:text-[#FBFBFA]/30 outline-none pl-2.5 pr-8"
                     />
                     <button
                       type="button"
                       onClick={() => setShowSignInPassword((prev) => !prev)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#063D2E]/60 p-1 text-xs"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#FBFBFA]/60 hover:text-[#FBFBFA] p-1 text-xs"
                       aria-label={showSignInPassword ? "Hide password" : "Show password"}
                     >
-                      {showSignInPassword ? "Hide" : "Show"}
+                      <StitchIcon name={showSignInPassword ? "visibility_off" : "visibility"} className="w-4 h-4" />
                     </button>
                   </div>
                   {signInErrors.password && (
-                    <p className="mt-1 font-mono text-[11px] text-red-600">
+                    <p className="mt-1 font-mono text-[11px] text-red-400 pl-1">
                       {signInErrors.password}
                     </p>
                   )}
@@ -808,74 +855,101 @@ export function AuthCard({ initialMode = "sign-in" }: AuthCardProps) {
                 <button
                   type="submit"
                   disabled={isSubmittingSignIn}
-                  className="w-full mt-2 rounded-lg bg-[#063D2E] text-[#F4F1E5] py-2.5 px-4 font-mono text-xs font-bold uppercase tracking-wider shadow-md"
+                  className="w-full mt-3 min-h-[48px] rounded-full bg-gradient-to-r from-[#D4AF37] via-[#E9C349] to-[#D4AF37] text-[#081C1B] font-title-md text-sm font-bold shadow-[0_12px_24px_-6px_rgba(233,195,73,0.35)] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                 >
-                  {isSubmittingSignIn ? "Signing in..." : "Sign in"}
+                  {isSubmittingSignIn ? (
+                    <>
+                      <StitchIcon name="refresh" className="w-4 h-4 animate-spin" />
+                      <span>Signing in...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Sign in to SafariX</span>
+                      <StitchIcon name="arrow_forward" className="w-4 h-4" />
+                    </>
+                  )}
                 </button>
-              </form>
+              </motion.form>
             ) : (
               /* Mobile Sign Up Form */
-              <form onSubmit={handleSignUpSubmit} noValidate className="space-y-3">
+              <motion.form
+                key="mobile-signup"
+                initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25 }}
+                onSubmit={handleSignUpSubmit}
+                noValidate
+                className="space-y-3"
+              >
                 {signUpError && (
                   <div
                     role="alert"
-                    className="rounded-lg border border-red-500/25 bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-700"
+                    className="rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2 text-xs font-medium text-red-200 flex items-center gap-2"
                   >
-                    {signUpError}
+                    <span className="w-4 h-4 rounded-full bg-red-500/30 flex items-center justify-center text-[10px] font-bold">!</span>
+                    <span>{signUpError}</span>
                   </div>
                 )}
+
                 <div>
                   <label
                     htmlFor="mobile-signup-name"
-                    className="block font-mono text-[10px] font-semibold uppercase tracking-wider text-[#063D2E]/80 mb-0.5"
+                    className="block font-mono text-[10px] font-semibold uppercase tracking-wider text-[#FBFBFA]/75 mb-1"
                   >
                     Full name
                   </label>
-                  <input
-                    id="mobile-signup-name"
-                    type="text"
-                    autoComplete="name"
-                    value={signUpData.name}
-                    onChange={(e) => setSignUpData((prev) => ({ ...prev, name: e.target.value }))}
-                    disabled={isSubmittingSignUp}
-                    placeholder="Elena Rostova"
-                    className="w-full rounded-lg border border-[#063D2E]/20 bg-white/80 px-3 py-1.5 text-xs text-[#063D2E] focus:outline-none focus:ring-1 focus:ring-[#063D2E]"
-                  />
+                  <div className="relative flex items-center rounded-xl border border-white/15 bg-white/5 focus-within:bg-white/10 focus-within:border-[#E9C349] focus-within:ring-2 focus-within:ring-[#E9C349]/20 transition-all px-3 min-h-[44px]">
+                    <StitchIcon name="person" className="w-4 h-4 text-[#E9C349]/70 flex-shrink-0" />
+                    <input
+                      id="mobile-signup-name"
+                      type="text"
+                      autoComplete="name"
+                      value={signUpData.name}
+                      onChange={(e) => setSignUpData((prev) => ({ ...prev, name: e.target.value }))}
+                      disabled={isSubmittingSignUp}
+                      placeholder="Elena Rostova"
+                      className="w-full bg-transparent text-xs text-[#FBFBFA] placeholder:text-[#FBFBFA]/30 outline-none pl-2"
+                    />
+                  </div>
                   {signUpErrors.name && (
-                    <p className="mt-0.5 font-mono text-[10px] text-red-600">{signUpErrors.name}</p>
+                    <p className="mt-0.5 font-mono text-[10px] text-red-400 pl-1">{signUpErrors.name}</p>
                   )}
                 </div>
 
                 <div>
                   <label
                     htmlFor="mobile-signup-email"
-                    className="block font-mono text-[10px] font-semibold uppercase tracking-wider text-[#063D2E]/80 mb-0.5"
+                    className="block font-mono text-[10px] font-semibold uppercase tracking-wider text-[#FBFBFA]/75 mb-1"
                   >
                     Email address
                   </label>
-                  <input
-                    id="mobile-signup-email"
-                    type="email"
-                    autoComplete="email"
-                    value={signUpData.email}
-                    onChange={(e) => setSignUpData((prev) => ({ ...prev, email: e.target.value }))}
-                    disabled={isSubmittingSignUp}
-                    placeholder="traveler@safarix.com"
-                    className="w-full rounded-lg border border-[#063D2E]/20 bg-white/80 px-3 py-1.5 text-xs text-[#063D2E] focus:outline-none focus:ring-1 focus:ring-[#063D2E]"
-                  />
+                  <div className="relative flex items-center rounded-xl border border-white/15 bg-white/5 focus-within:bg-white/10 focus-within:border-[#E9C349] focus-within:ring-2 focus-within:ring-[#E9C349]/20 transition-all px-3 min-h-[44px]">
+                    <StitchIcon name="mail" className="w-4 h-4 text-[#E9C349]/70 flex-shrink-0" />
+                    <input
+                      id="mobile-signup-email"
+                      type="email"
+                      autoComplete="email"
+                      value={signUpData.email}
+                      onChange={(e) => setSignUpData((prev) => ({ ...prev, email: e.target.value }))}
+                      disabled={isSubmittingSignUp}
+                      placeholder="traveler@safarix.com"
+                      className="w-full bg-transparent text-xs text-[#FBFBFA] placeholder:text-[#FBFBFA]/30 outline-none pl-2"
+                    />
+                  </div>
                   {signUpErrors.email && (
-                    <p className="mt-0.5 font-mono text-[10px] text-red-600">{signUpErrors.email}</p>
+                    <p className="mt-0.5 font-mono text-[10px] text-red-400 pl-1">{signUpErrors.email}</p>
                   )}
                 </div>
 
                 <div>
                   <label
                     htmlFor="mobile-signup-password"
-                    className="block font-mono text-[10px] font-semibold uppercase tracking-wider text-[#063D2E]/80 mb-0.5"
+                    className="block font-mono text-[10px] font-semibold uppercase tracking-wider text-[#FBFBFA]/75 mb-1"
                   >
                     Password (min 8 chars)
                   </label>
-                  <div className="relative">
+                  <div className="relative flex items-center rounded-xl border border-white/15 bg-white/5 focus-within:bg-white/10 focus-within:border-[#E9C349] focus-within:ring-2 focus-within:ring-[#E9C349]/20 transition-all px-3 min-h-[44px]">
+                    <StitchIcon name="lock" className="w-4 h-4 text-[#E9C349]/70 flex-shrink-0" />
                     <input
                       id="mobile-signup-password"
                       type={showSignUpPassword ? "text" : "password"}
@@ -886,19 +960,19 @@ export function AuthCard({ initialMode = "sign-in" }: AuthCardProps) {
                       }
                       disabled={isSubmittingSignUp}
                       placeholder="••••••••"
-                      className="w-full rounded-lg border border-[#063D2E]/20 bg-white/80 px-3 py-1.5 pr-10 text-xs text-[#063D2E] focus:outline-none focus:ring-1 focus:ring-[#063D2E]"
+                      className="w-full bg-transparent text-xs text-[#FBFBFA] placeholder:text-[#FBFBFA]/30 outline-none pl-2 pr-7"
                     />
                     <button
                       type="button"
                       onClick={() => setShowSignUpPassword((prev) => !prev)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#063D2E]/60 p-1 text-xs"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#FBFBFA]/60 hover:text-[#FBFBFA] p-1 text-xs"
                       aria-label={showSignUpPassword ? "Hide password" : "Show password"}
                     >
-                      {showSignUpPassword ? "Hide" : "Show"}
+                      <StitchIcon name={showSignUpPassword ? "visibility_off" : "visibility"} className="w-3.5 h-3.5" />
                     </button>
                   </div>
                   {signUpErrors.password && (
-                    <p className="mt-0.5 font-mono text-[10px] text-red-600">
+                    <p className="mt-0.5 font-mono text-[10px] text-red-400 pl-1">
                       {signUpErrors.password}
                     </p>
                   )}
@@ -907,11 +981,12 @@ export function AuthCard({ initialMode = "sign-in" }: AuthCardProps) {
                 <div>
                   <label
                     htmlFor="mobile-signup-confirm"
-                    className="block font-mono text-[10px] font-semibold uppercase tracking-wider text-[#063D2E]/80 mb-0.5"
+                    className="block font-mono text-[10px] font-semibold uppercase tracking-wider text-[#FBFBFA]/75 mb-1"
                   >
                     Confirm password
                   </label>
-                  <div className="relative">
+                  <div className="relative flex items-center rounded-xl border border-white/15 bg-white/5 focus-within:bg-white/10 focus-within:border-[#E9C349] focus-within:ring-2 focus-within:ring-[#E9C349]/20 transition-all px-3 min-h-[44px]">
+                    <StitchIcon name="verified" className="w-4 h-4 text-[#E9C349]/70 flex-shrink-0" />
                     <input
                       id="mobile-signup-confirm"
                       type={showConfirmPassword ? "text" : "password"}
@@ -922,19 +997,19 @@ export function AuthCard({ initialMode = "sign-in" }: AuthCardProps) {
                       }
                       disabled={isSubmittingSignUp}
                       placeholder="••••••••"
-                      className="w-full rounded-lg border border-[#063D2E]/20 bg-white/80 px-3 py-1.5 pr-10 text-xs text-[#063D2E] focus:outline-none focus:ring-1 focus:ring-[#063D2E]"
+                      className="w-full bg-transparent text-xs text-[#FBFBFA] placeholder:text-[#FBFBFA]/30 outline-none pl-2 pr-7"
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword((prev) => !prev)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#063D2E]/60 p-1 text-xs"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#FBFBFA]/60 hover:text-[#FBFBFA] p-1 text-xs"
                       aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                     >
-                      {showConfirmPassword ? "Hide" : "Show"}
+                      <StitchIcon name={showConfirmPassword ? "visibility_off" : "visibility"} className="w-3.5 h-3.5" />
                     </button>
                   </div>
                   {signUpErrors.confirmPassword && (
-                    <p className="mt-0.5 font-mono text-[10px] text-red-600">
+                    <p className="mt-0.5 font-mono text-[10px] text-red-400 pl-1">
                       {signUpErrors.confirmPassword}
                     </p>
                   )}
@@ -943,14 +1018,25 @@ export function AuthCard({ initialMode = "sign-in" }: AuthCardProps) {
                 <button
                   type="submit"
                   disabled={isSubmittingSignUp}
-                  className="w-full mt-2 rounded-lg bg-[#063D2E] text-[#F4F1E5] py-2.5 px-4 font-mono text-xs font-bold uppercase tracking-wider shadow-md"
+                  className="w-full mt-3 min-h-[48px] rounded-full bg-gradient-to-r from-[#D4AF37] via-[#E9C349] to-[#D4AF37] text-[#081C1B] font-title-md text-sm font-bold shadow-[0_12px_24px_-6px_rgba(233,195,73,0.35)] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                 >
-                  {isSubmittingSignUp ? "Creating account..." : "Create account"}
+                  {isSubmittingSignUp ? (
+                    <>
+                      <StitchIcon name="refresh" className="w-4 h-4 animate-spin" />
+                      <span>Creating account...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Create SafariX Account</span>
+                      <StitchIcon name="arrow_forward" className="w-4 h-4" />
+                    </>
+                  )}
                 </button>
-              </form>
+              </motion.form>
             )}
           </div>
         </div>
+      
       </div>
 
       {/* Bottom privacy and terms footer */}

@@ -48,7 +48,7 @@ export interface TransportTestCaseResult {
   details?: unknown;
 }
 
-export async function runAllTransportTests(): Promise<TransportTestCaseResult[]> {
+async function runAllTransportTests(): Promise<TransportTestCaseResult[]> {
   const results: TransportTestCaseResult[] = [];
 
   const baseTrip: TripWithPreferences = {

@@ -70,7 +70,7 @@ const mockTestTrip: TripWithPreferences = {
   },
 };
 
-export async function runAllAgentTests(): Promise<AgentTestCaseResult[]> {
+async function runAllAgentTests(): Promise<AgentTestCaseResult[]> {
   const results: AgentTestCaseResult[] = [];
 
   // Prepare context

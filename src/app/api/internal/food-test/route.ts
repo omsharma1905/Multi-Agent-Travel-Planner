@@ -82,7 +82,7 @@ function makeTestRestaurant(
   };
 }
 
-export async function runAllFoodTests(): Promise<FoodTestCaseResult[]> {
+async function runAllFoodTests(): Promise<FoodTestCaseResult[]> {
   const results: FoodTestCaseResult[] = [];
   const mockProvider = new MockFoodProvider();
 
