@@ -1,6 +1,3 @@
-import { TripsRepository } from "../src/features/trips/repository";
-import { UsersRepository } from "../src/features/auth/user-repository";
-
 type TripFixture = { tripId: string; userId: string };
 
 export class ScratchTestFixtures {
@@ -9,18 +6,24 @@ export class ScratchTestFixtures {
   private cleaned = false;
 
   assertIsolatedDatabase(apiBaseUrl?: string): void {
+    if (apiBaseUrl !== undefined) {
+      throw new Error(
+        "HTTP scratch tests are disabled because the API server's active database identity cannot be independently verified. No fixtures may be created or cleaned up.",
+      );
+    }
+
     const databaseUrl = process.env.DATABASE_URL;
     const declaredTestDatabaseUrl = process.env.SAFARIX_TEST_DATABASE_URL;
-    const serverTestDatabaseUrl = process.env.SAFARIX_TEST_SERVER_DATABASE_URL;
+    const declaredServerTestDatabaseUrl = process.env.SAFARIX_TEST_SERVER_DATABASE_URL;
 
     if (
       process.env.SAFARIX_RUN_SCRATCH_TESTS !== "true" ||
       !databaseUrl ||
       databaseUrl !== declaredTestDatabaseUrl ||
-      databaseUrl !== serverTestDatabaseUrl
+      databaseUrl !== declaredServerTestDatabaseUrl
     ) {
       throw new Error(
-        "Scratch tests require explicit matching DATABASE_URL, SAFARIX_TEST_DATABASE_URL, and SAFARIX_TEST_SERVER_DATABASE_URL values.",
+        "Direct database scratch tests require explicit matching test database URL declarations.",
       );
     }
 
@@ -45,25 +48,6 @@ export class ScratchTestFixtures {
     if (process.env.NODE_ENV === "production") {
       throw new Error("Scratch tests cannot run with NODE_ENV=production.");
     }
-
-    if (apiBaseUrl) {
-      if (process.env.TEST_BASE_URL !== apiBaseUrl) {
-        throw new Error("API scratch tests require an explicit TEST_BASE_URL.");
-      }
-      let apiHost: string;
-      try {
-        const parsed = new URL(apiBaseUrl);
-        apiHost = parsed.hostname;
-        if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-          throw new Error();
-        }
-      } catch {
-        throw new Error("API scratch tests require a valid local test server URL.");
-      }
-      if (!["localhost", "127.0.0.1", "::1"].includes(apiHost)) {
-        throw new Error("API scratch tests may only target a loopback test server.");
-      }
-    }
   }
 
   trackUser(userId: string): void {
@@ -77,6 +61,11 @@ export class ScratchTestFixtures {
   async cleanup(): Promise<void> {
     if (this.cleaned) return;
     this.cleaned = true;
+
+    const [{ TripsRepository }, { UsersRepository }] = await Promise.all([
+      import("../src/features/trips/repository"),
+      import("../src/features/auth/user-repository"),
+    ]);
 
     const failures: string[] = [];
     for (const { tripId, userId } of this.trips.values()) {

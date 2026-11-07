@@ -783,6 +783,7 @@ export const TripsRepository = {
         memTripTimestamps.set(tripId, Date.now());
         versions.push(newVersion);
         memTripVersions.set(tripId, versions);
+        planningResultCache.invalidateTrip(tripId);
         return newVersion;
       }
 
@@ -900,28 +901,6 @@ export const TripsRepository = {
     },
 
     /**
-     * Internal helper to insert a version into both DB and memory cache.
-     */
-    async insertVersionRecord(version: TripVersion): Promise<void> {
-      assertProductionPersistenceGuards();
-
-      if (!isDatabaseConfigured) {
-        const list = memTripVersions.get(version.tripId) || [];
-        if (!list.some((entry) => entry.id === version.id)) list.push(version);
-        memTripVersions.set(version.tripId, list);
-        return;
-      }
-
-      await db.transaction(async (tx) => {
-        await acquireTripVersionLock(tx, version.tripId);
-        const existing = await loadTripVersions(tx, version.tripId);
-        if (existing.some((entry) => entry.id === version.id)) return;
-        if (version.versionNumber === 1 && existing.length > 0) return;
-        await insertTripVersion(tx, version);
-      });
-    },
-
-    /**
      * Lists all versions for a trip, ordered by versionNumber descending (newest first).
      * Strict user ownership enforced.
      */
@@ -935,32 +914,54 @@ export const TripsRepository = {
 
       if (!isDatabaseConfigured) {
         const list = memTripVersions.get(tripId) || [];
-        result = list
-          .filter((v) => v.userId === userId)
-          .sort((a, b) => b.versionNumber - a.versionNumber);
+        result = list.filter((v) => v.userId === userId);
+        if (result.length === 0 && trip.plan?.status === "completed") {
+          const initialVersion = createInitialVersion(trip, {
+            tripId,
+            userId,
+            scope: "original",
+            snapshot: trip.plan,
+            totalCost: trip.plan.budget?.totalEstimatedCost ?? 0,
+            currency: trip.plan.budget?.currency ?? "USD",
+            currencySymbol: trip.plan.budget?.currencySymbol ?? "$",
+          });
+          if (initialVersion) {
+            memTripVersions.set(tripId, [initialVersion]);
+            result = [initialVersion];
+          }
+        }
+        result.sort((a, b) => b.versionNumber - a.versionNumber);
       } else {
         try {
-          const records = await db.query.tripVersions.findMany({
-            where: eq(schema.tripVersions.tripId, tripId),
-            orderBy: [desc(schema.tripVersions.versionNumber)],
-          });
+          result = await db.transaction(async (tx) => {
+            await acquireTripVersionLock(tx, tripId);
+            const versions = await loadTripVersions(tx, tripId);
+            if (versions.length > 0) return versions;
 
-          result = records
-            .filter((r) => r.userId === userId)
-            .map((r) => ({
-              id: r.id,
-              tripId: r.tripId,
-              userId: r.userId,
-              versionNumber: r.versionNumber,
-              scope: r.scope,
-              instruction: r.instruction,
-              changeSummary: (r.changeSummary as Record<string, unknown>) ?? null,
-              snapshot: r.snapshot as import("@/lib/orchestration/types").OrchestrationResult,
-              totalCost: r.totalCost,
-              currency: r.currency,
-              currencySymbol: r.currencySymbol,
-              createdAt: r.createdAt.toISOString(),
-            }));
+            const currentTrip = await tx.query.trips.findFirst({
+              where: and(eq(schema.trips.id, tripId), eq(schema.trips.userId, userId)),
+            });
+            const plan = currentTrip?.plan as OrchestrationResult | null | undefined;
+            if (!currentTrip || !plan || plan.status !== "completed") return [];
+
+            const initialVersion = createInitialVersion(
+              { ...currentTrip, plan },
+              {
+                tripId,
+                userId,
+                scope: "original",
+                snapshot: plan,
+                totalCost: plan.budget?.totalEstimatedCost ?? 0,
+                currency: plan.budget?.currency ?? "USD",
+                currencySymbol: plan.budget?.currencySymbol ?? "$",
+              },
+            );
+            if (!initialVersion) return [];
+
+            await insertTripVersion(tx, initialVersion);
+            return await loadTripVersions(tx, tripId);
+          });
+          result = result.filter((version) => version.userId === userId);
         } catch (err) {
           if (process.env.NODE_ENV === "production") {
             throw new Error("PERSISTENCE_ERROR: Failed to retrieve journey versions from database.");
@@ -971,29 +972,6 @@ export const TripsRepository = {
             .filter((v) => v.userId === userId)
             .sort((a, b) => b.versionNumber - a.versionNumber);
         }
-      }
-
-      // Auto-seed Version 1 if trip already has completed plan but no versions yet
-
-
-      if (result.length === 0 && trip.plan && trip.plan.status === "completed") {
-        const v1Id = `ver_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-        const v1: TripVersion = {
-          id: v1Id,
-          tripId,
-          userId,
-          versionNumber: 1,
-          scope: "original",
-          instruction: "Initial AI journey plan",
-          changeSummary: { summary: "Initial generated journey plan" },
-          snapshot: trip.plan,
-          totalCost: trip.plan.budget?.totalEstimatedCost ?? 0,
-          currency: trip.plan.budget?.currency ?? "USD",
-          currencySymbol: trip.plan.budget?.currencySymbol ?? "$",
-          createdAt: trip.createdAt,
-        };
-        await this.insertVersionRecord(v1);
-        return [v1];
       }
 
       return result;

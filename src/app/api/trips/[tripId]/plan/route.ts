@@ -13,6 +13,7 @@ import { assertCsrfAllowed } from "@/lib/security/csrf";
 import { enforceRateLimit } from "@/lib/security/rate-limiter";
 import { PlanningLockManager } from "@/lib/orchestration/planning-lock";
 import { planningResultCache } from "@/lib/orchestration/planning-result-cache";
+import { persistPlanningResult } from "@/lib/orchestration/planning-persistence-response";
 
 export async function POST(
   req: NextRequest,
@@ -108,20 +109,23 @@ export async function POST(
     try {
       const result = await travelOrchestrator.planTrip(trip);
 
-      // Persist plan and update trip status
-      const persistedTrip = await TripsService.updateTripPlan(
-        tripId,
-        user.id,
+      return await persistPlanningResult(
+        {
+          tripId,
+          userId: user.id,
+          status: result.status === "completed" ? "upcoming" : "failed",
+          scope: "journey",
+          instruction: "Generated AI travel plan",
+          changeSummary: { summary: "Generated AI travel plan" },
+          snapshot: result,
+          totalCost: result.budget?.totalEstimatedCost ?? 0,
+          currency: result.budget?.currency ?? "USD",
+          currencySymbol: result.budget?.currencySymbol ?? "$",
+        },
         result,
-        result.status === "completed" ? "upcoming" : "failed",
+        TripsService.updateTripPlanAndRecordVersion,
+        planningResultCache,
       );
-      if (!persistedTrip) {
-        planningResultCache.invalidateTrip(tripId);
-        return NextResponse.json({ error: "Journey not found." }, { status: 404 });
-      }
-
-      planningResultCache.set(tripId, user.id, result);
-      return NextResponse.json(result, { status: 200 });
     } finally {
       PlanningLockManager.release(tripId);
     }
