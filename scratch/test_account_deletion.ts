@@ -27,8 +27,9 @@ import { spawn } from "child_process";
 import os from "os";
 import path from "path";
 import fs from "fs";
+import { runScratchTest, type ScratchTestFixtures } from "./test-safety";
 
-const BASE_URL = process.env.TEST_BASE_URL || "http://localhost:3000";
+const BASE_URL = process.env.TEST_BASE_URL || "";
 const CHROME_PATH = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
 const CDP_PORT = 9225;
 const USER_DATA_DIR = path.join(os.tmpdir(), `chrome_del_profile_${Date.now()}`);
@@ -158,7 +159,7 @@ async function getDebuggerUrl(): Promise<string> {
   });
 }
 
-async function runAccountDeletionTests() {
+async function runAccountDeletionTests(fixtures: ScratchTestFixtures) {
   console.log("=================================================================");
   console.log(" SAFARIX ACCOUNT DELETION VERIFICATION & REGRESSION SUITE");
   console.log("=================================================================");
@@ -202,6 +203,8 @@ async function runAccountDeletionTests() {
       password: userAPassword,
     },
   });
+  const userAId = regARes.json?.user?.id;
+  if (typeof userAId === "string") fixtures.trackUser(userAId);
   const cookieA = extractCookie(regARes);
   check(
     "Setup",
@@ -219,6 +222,8 @@ async function runAccountDeletionTests() {
       password: userBPassword,
     },
   });
+  const userBId = regBRes.json?.user?.id;
+  if (typeof userBId === "string") fixtures.trackUser(userBId);
   const cookieB = extractCookie(regBRes);
   check(
     "Setup",
@@ -244,6 +249,10 @@ async function runAccountDeletionTests() {
     },
   });
   const tripAId = tripARes.json?.id;
+  const trackedUserAId = regARes.json?.user?.id;
+  if (typeof tripAId === "string" && typeof trackedUserAId === "string") {
+    fixtures.trackTrip(tripAId, trackedUserAId);
+  }
   check(
     "Setup",
     "User A created a personal trip",
@@ -268,6 +277,10 @@ async function runAccountDeletionTests() {
     },
   });
   const tripBId = tripBRes.json?.id;
+  const trackedUserBId = regBRes.json?.user?.id;
+  if (typeof tripBId === "string" && typeof trackedUserBId === "string") {
+    fixtures.trackTrip(tripBId, trackedUserBId);
+  }
   check(
     "Setup",
     "User B created a personal trip",
@@ -346,7 +359,7 @@ async function runAccountDeletionTests() {
   // -------------------------------------------------------------
   console.log("\n--- REQ 4: IDOR Attack Prevention ---");
   const userBProfile = await request("/api/profile", { cookie: cookieB!, clientIp: ipB });
-  const userBId = userBProfile.json?.id;
+  const profileUserBId = userBProfile.json?.id;
 
   // User A attempts to delete User B by supplying targetUserId
   const idorRes = await request("/api/profile", {
@@ -355,8 +368,8 @@ async function runAccountDeletionTests() {
     clientIp: ipA,
     body: {
       confirmation: "DELETE",
-      targetUserId: userBId,
-      userId: userBId,
+      targetUserId: profileUserBId,
+      userId: profileUserBId,
       targetEmail: userBEmail,
       password: "wrong_password",
     },
@@ -759,6 +772,8 @@ async function runAccountDeletionTests() {
       password: "Password999!_safe",
     },
   });
+  const freshUserId = freshUserRes.json?.user?.id;
+  if (typeof freshUserId === "string") fixtures.trackUser(freshUserId);
   const cookieC = extractCookie(freshUserRes);
   check(
     "Health",
@@ -783,6 +798,9 @@ async function runAccountDeletionTests() {
     },
   });
   const freshTripId = freshTripRes.json?.id;
+  if (typeof freshTripId === "string" && typeof freshUserId === "string") {
+    fixtures.trackTrip(freshTripId, freshUserId);
+  }
   check(
     "Health",
     "New journeys can be created and persisted cleanly after deletion operations",
@@ -798,11 +816,11 @@ async function runAccountDeletionTests() {
   console.log("=================================================================\n");
 
   if (passedCount !== totalCount) {
-    process.exit(1);
+    throw new Error(`Account deletion suite failed: ${totalCount - passedCount} checks failed.`);
   }
 }
 
-runAccountDeletionTests().catch((err) => {
+runScratchTest(runAccountDeletionTests, BASE_URL).catch((err) => {
   console.error("Test execution failed:", err);
   process.exit(1);
 });

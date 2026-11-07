@@ -1,5 +1,9 @@
 import { spawn } from "child_process";
 import http from "http";
+import { runScratchTest, type ScratchTestFixtures } from "./test-safety";
+
+const BASE_URL = process.env.TEST_BASE_URL || "http://127.0.0.1:3001";
+const PORT = Number(new URL(BASE_URL).port || "3001");
 
 async function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -55,10 +59,10 @@ async function postJson(url: string, data: any): Promise<{ status: number; json:
   });
 }
 
-async function main() {
+async function main(fixtures: ScratchTestFixtures) {
   console.log("=== SAFARIX ANIMATED AUTH & ROUTING IN-PROCESS VERIFICATION ===\n");
 
-  const devServer = spawn("npx.cmd", ["next", "dev", "--port", "3001"], {
+  const devServer = spawn("npx.cmd", ["next", "dev", "--port", String(PORT)], {
     stdio: ["ignore", "pipe", "pipe"],
     shell: true,
   });
@@ -78,12 +82,12 @@ async function main() {
   });
 
   // Wait for server to become ready on port 3001
-  console.log("Waiting for Next.js dev server on http://localhost:3001...");
+  console.log("Waiting for Next.js dev server...");
   let ready = false;
   for (let i = 0; i < 40; i++) {
     await sleep(500);
     try {
-      const res = await fetchRoute("http://127.0.0.1:3001/api/auth/session");
+      const res = await fetchRoute(`${BASE_URL}/api/auth/session`);
       if (res.status === 200) {
         ready = true;
         console.log("Dev server is ready!\n");
@@ -99,7 +103,7 @@ async function main() {
   if (!ready) {
     console.error("Server failed to respond within 20s!");
     devServer.kill();
-    process.exit(1);
+    throw new Error("Dev server failed to respond within 20 seconds.");
   }
 
   let passed = 0;
@@ -117,7 +121,7 @@ async function main() {
   try {
     // 1. Verify GET /auth/sign-in
     console.log("1. Inspecting GET /auth/sign-in...");
-    const signInRes = await fetchRoute("http://127.0.0.1:3001/auth/sign-in");
+    const signInRes = await fetchRoute(`${BASE_URL}/auth/sign-in`);
     assert("HTTP Status 200", signInRes.status === 200, String(signInRes.status));
     assert("Contains 'Sign in' form elements", signInRes.text.includes("Sign in"));
     assert("Contains 'Welcome back.' editorial heading", signInRes.text.includes("Welcome") && signInRes.text.includes("back"));
@@ -129,7 +133,7 @@ async function main() {
 
     // 2. Verify GET /auth/sign-up
     console.log("\n2. Inspecting GET /auth/sign-up...");
-    const signUpRes = await fetchRoute("http://127.0.0.1:3001/auth/sign-up");
+    const signUpRes = await fetchRoute(`${BASE_URL}/auth/sign-up`);
     assert("HTTP Status 200", signUpRes.status === 200, String(signUpRes.status));
     assert("Contains 'Create account' form elements", signUpRes.text.includes("Create account"));
     assert("Contains 'Start your' editorial heading", signUpRes.text.includes("Start your") && signUpRes.text.includes("journey"));
@@ -141,29 +145,31 @@ async function main() {
     // 3. Verify Auth APIs with test credentials
     console.log("\n3. Testing Auth API integration...");
     const testEmail = `animated_auth_test_${Date.now()}@example.com`;
-    const signupApiRes = await postJson("http://127.0.0.1:3001/api/auth/sign-up", {
+    const signupApiRes = await postJson(`${BASE_URL}/api/auth/sign-up`, {
       name: "Aurora Explorer",
       email: testEmail,
       password: "TestPassword123!",
     });
+    const createdUserId = signupApiRes.json?.user?.id;
+    if (typeof createdUserId === "string") fixtures.trackUser(createdUserId);
     assert("POST /api/auth/sign-up returns 201 or 200", signupApiRes.status === 200 || signupApiRes.status === 201, `Status ${signupApiRes.status}`);
 
     const setCookie = signupApiRes.headers["set-cookie"]?.[0] || "";
     assert("Session cookie returned with HttpOnly", setCookie.includes("safarix_session") && setCookie.includes("HttpOnly"), setCookie.slice(0, 40) + "...");
 
     // Validate active session
-    const sessionRes = await fetchRoute("http://127.0.0.1:3001/api/auth/session", setCookie);
+    const sessionRes = await fetchRoute(`${BASE_URL}/api/auth/session`, setCookie);
     assert("GET /api/auth/session is authenticated", sessionRes.text.includes(testEmail), sessionRes.text.slice(0, 100));
 
     // Sign in with existing credentials
-    const signinApiRes = await postJson("http://127.0.0.1:3001/api/auth/sign-in", {
+    const signinApiRes = await postJson(`${BASE_URL}/api/auth/sign-in`, {
       email: testEmail,
       password: "TestPassword123!",
     });
     assert("POST /api/auth/sign-in succeeds", signinApiRes.status === 200, `Status ${signinApiRes.status}`);
 
     // Invalid credentials rejection
-    const invalidSignin = await postJson("http://127.0.0.1:3001/api/auth/sign-in", {
+    const invalidSignin = await postJson(`${BASE_URL}/api/auth/sign-in`, {
       email: testEmail,
       password: "wrongpassword!",
     });
@@ -178,11 +184,11 @@ async function main() {
   }
 
   if (failed > 0) {
-    process.exit(1);
+    throw new Error(`${failed} authentication server checks failed.`);
   }
 }
 
-main().catch((err) => {
+runScratchTest(main, BASE_URL).catch((err) => {
   console.error("Verification script failed:", err);
   process.exit(1);
 });

@@ -182,10 +182,10 @@ export class JourneyEditor {
     changeSummary: EditChangeSummary;
   }): Promise<void> {
     const { tripId, userId, plan, scope, instruction, changeSummary } = params;
-    await TripsService.updateTripPlan(tripId, userId, plan, "upcoming");
-    await TripsService.recordTripVersion({
+    const version = await TripsService.updateTripPlanAndRecordVersion({
       tripId,
       userId,
+      status: "upcoming",
       scope,
       instruction: instruction ?? null,
       changeSummary: changeSummary as unknown as Record<string, unknown>,
@@ -194,6 +194,9 @@ export class JourneyEditor {
       currency: plan.budget?.currency ?? "USD",
       currencySymbol: plan.budget?.currencySymbol ?? "$",
     });
+    if (!version) {
+      throw new Error("Journey was not found or you do not have permission to modify it.");
+    }
   }
 
   // =========================================================================

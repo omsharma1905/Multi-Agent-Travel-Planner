@@ -30,8 +30,9 @@ import {
   SESSION_COOKIE_NAME,
 } from "../src/lib/auth/session";
 import { TripsService } from "../src/features/trips/service";
+import { runScratchTest, type ScratchTestFixtures } from "./test-safety";
 
-const BASE_URL = process.env.TEST_BASE_URL || "http://localhost:3000";
+const BASE_URL = process.env.TEST_BASE_URL || "";
 
 let totalTests = 0;
 let passedTests = 0;
@@ -53,7 +54,8 @@ function extractCookie(response: Response, cookieName: string): string | null {
   return match ? match[1] : null;
 }
 
-async function runTestSuite() {
+async function runTestSuite(fixtures: ScratchTestFixtures) {
+  fixtures.assertIsolatedDatabase(BASE_URL);
   console.log("=================================================================");
   console.log(" SAFARIX BUG 4: AUTHENTICATION & BROWSER HISTORY SECURITY SUITE");
   console.log(` Target Server: ${BASE_URL}`);
@@ -91,6 +93,7 @@ async function runTestSuite() {
     assert(data.success === true, "Sign-up response success flag is true");
     assert(data.user && data.user.email === userAEmail, "Sign-up returns created user data");
     userAId = data.user.id;
+    fixtures.trackUser(userAId);
 
     const setCookie = res.headers.get("set-cookie") || "";
     assert(setCookie.includes(SESSION_COOKIE_NAME), "Sign-up sets session cookie in response");
@@ -124,6 +127,7 @@ async function runTestSuite() {
     assert(resB.status === 201, "Sign-up User B returns HTTP 201");
     const dataB = await resB.json();
     userBId = dataB.user.id;
+    fixtures.trackUser(userBId);
     const tokenB = extractCookie(resB, SESSION_COOKIE_NAME);
     userBCookie = `${SESSION_COOKIE_NAME}=${tokenB}`;
   }
@@ -280,6 +284,7 @@ async function runTestSuite() {
       },
     );
     tripAId = tripA.id;
+    fixtures.trackTrip(tripAId, userAId);
     assert(Boolean(tripAId), "Trip created successfully for User A");
 
     // User A accesses their own trip via API
@@ -504,27 +509,6 @@ async function runTestSuite() {
     );
   }
 
-  // -------------------------------------------------------------------------
-  // CLEANUP TEST USERS & TRIPS
-  // -------------------------------------------------------------------------
-  console.log("\n--- Cleanup ---");
-  try {
-    if (tripAId) {
-      await TripsService.deleteTrip(tripAId, userAId);
-      console.log(`✓ Cleaned up test trip: ${tripAId}`);
-    }
-    if (userAId) {
-      await db.delete(schema.users).where(eq(schema.users.id, userAId));
-      console.log(`✓ Cleaned up test user A: ${userAId}`);
-    }
-    if (userBId) {
-      await db.delete(schema.users).where(eq(schema.users.id, userBId));
-      console.log(`✓ Cleaned up test user B: ${userBId}`);
-    }
-  } catch (err) {
-    console.warn("Notice: Test cleanup encountered non-fatal error:", err);
-  }
-
   console.log("\n=================================================================");
   console.log(` TEST RUN COMPLETE: ${passedTests}/${totalTests} TESTS PASSED`);
   console.log("=================================================================\n");
@@ -534,7 +518,7 @@ async function runTestSuite() {
   }
 }
 
-runTestSuite().catch((err) => {
+runScratchTest(runTestSuite, BASE_URL).catch((err) => {
   console.error("Test Suite Execution Failed:", err);
   process.exit(1);
 });

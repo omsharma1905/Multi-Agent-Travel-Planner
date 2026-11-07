@@ -1,8 +1,10 @@
 import { spawn } from "child_process";
 import http from "http";
+import { runScratchTest, type ScratchTestFixtures } from "./test-safety";
 
 const CHROME_PATH = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
 const PORT = 9222;
+const BASE_URL = process.env.TEST_BASE_URL || "";
 
 async function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -31,7 +33,7 @@ async function getDebuggerUrl(): Promise<string> {
   });
 }
 
-async function main() {
+async function main(fixtures: ScratchTestFixtures) {
   console.log("=================================================================");
   console.log(" SAFARIX FULL BROWSER VERIFICATION & REGRESSION SUITE");
   console.log("=================================================================\n");
@@ -40,7 +42,7 @@ async function main() {
   const testEmail = `test_suite_${Date.now()}@safarix.test`;
   const password = "Password123!";
   console.log(`Creating test user: ${testEmail}...`);
-  const signupRes = await fetch("http://localhost:3000/api/auth/sign-up", {
+  const signupRes = await fetch(`${BASE_URL}/api/auth/sign-up`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -49,6 +51,9 @@ async function main() {
       password,
     }),
   });
+  const signupData = await signupRes.json();
+  const userId = signupData.user?.id;
+  if (typeof userId === "string") fixtures.trackUser(userId);
   console.log("Sign-up status:", signupRes.status);
   const setCookie = signupRes.headers.get("set-cookie");
   let sessionToken = "";
@@ -139,7 +144,7 @@ async function main() {
 
   // Step 1: Fresh unauthenticated visit to landing page
   console.log("\n--- Step 1: Fresh Unauthenticated Visit to / ---");
-  await send("Page.navigate", { url: "http://localhost:3000/" });
+  await send("Page.navigate", { url: `${BASE_URL}/` });
   await sleep(2500);
 
   // Step 2: Unauthenticated visit to /auth/sign-in
@@ -171,7 +176,7 @@ async function main() {
 
   // Step 6: Authenticated visit to /dashboard
   console.log("\n--- Step 6: Authenticated Visit to /dashboard ---");
-  await send("Page.navigate", { url: "http://localhost:3000/dashboard" });
+  await send("Page.navigate", { url: `${BASE_URL}/dashboard` });
   await sleep(2500);
 
   // Step 7: Back Navigation to /
@@ -196,12 +201,12 @@ async function main() {
 
   // Step 9: Visit trip creation (/trips/new)
   console.log("\n--- Step 9: Visit Trip Creation (/trips/new) ---");
-  await send("Page.navigate", { url: "http://localhost:3000/trips/new" });
+  await send("Page.navigate", { url: `${BASE_URL}/trips/new` });
   await sleep(2500);
 
   // Step 10: Create trip and visit trip detail (/trips/[tripId])
   console.log("\n--- Step 10: Create Trip and Visit /trips/[tripId] ---");
-  const createTripRes = await fetch("http://localhost:3000/api/trips", {
+  const createTripRes = await fetch(`${BASE_URL}/api/trips`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -220,16 +225,19 @@ async function main() {
   console.log("Create trip status:", createTripRes.status);
   const tripData = await createTripRes.json();
   const tripId = tripData.id;
+  if (typeof tripId === "string" && typeof userId === "string") {
+    fixtures.trackTrip(tripId, userId);
+  }
   console.log("Created trip id:", tripId);
   if (tripId) {
-    await send("Page.navigate", { url: `http://localhost:3000/trips/${tripId}` });
+    await send("Page.navigate", { url: `${BASE_URL}/trips/${tripId}` });
     await sleep(3000);
   }
 
   // Step 11: Clear cookies (Sign Out) and verify protected route interception
   console.log("\n--- Step 11: Sign Out & Protected Route Interception ---");
   await send("Network.clearBrowserCookies");
-  await send("Page.navigate", { url: "http://localhost:3000/dashboard" });
+  await send("Page.navigate", { url: `${BASE_URL}/dashboard` });
   await sleep(2500);
 
   console.log("\n=================================================================");
@@ -244,11 +252,11 @@ async function main() {
   ws.close();
   chromeProcess.kill();
   if (recordedErrors.length > 0) {
-    process.exit(1);
+    throw new Error(`${recordedErrors.length} browser-flow errors were recorded.`);
   }
 }
 
-main().catch((err) => {
+runScratchTest(main, BASE_URL).catch((err) => {
   console.error(err);
   process.exit(1);
 });

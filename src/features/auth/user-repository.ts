@@ -9,6 +9,7 @@
 
 import { eq } from "drizzle-orm";
 import { db, schema, isDatabaseConfigured } from "@/lib/db";
+import { TripsRepository } from "@/features/trips/repository";
 import { User } from "./types";
 
 export interface UserRecord extends User {
@@ -294,34 +295,14 @@ export const UsersRepository = {
   async deleteAccount(userId: string): Promise<boolean> {
     assertProductionAuthGuards();
 
-    // 1. Clear memory user records
-    memUsers.delete(userId);
-    if (global.__memUsers) {
-      global.__memUsers.delete(userId);
-    }
-
-    // 2. Clear memory trips and versions for this user
-    if (global.__memTrips) {
-      const userTripIds: string[] = [];
-      for (const [tripId, trip] of global.__memTrips.entries()) {
-        if (trip.userId === userId) {
-          userTripIds.push(tripId);
-          global.__memTrips.delete(tripId);
-        }
-      }
-      if (global.__memTripVersions) {
-        for (const tripId of userTripIds) {
-          global.__memTripVersions.delete(tripId);
-        }
-        for (const [tripId, versions] of global.__memTripVersions.entries()) {
-          if (versions.some((v) => v.userId === userId)) {
-            global.__memTripVersions.delete(tripId);
-          }
-        }
-      }
-    }
+    const clearAccountMemory = () => {
+      memUsers.delete(userId);
+      global.__memUsers?.delete(userId);
+      TripsRepository.clearUserTripMemory(userId);
+    };
 
     if (!isDatabaseConfigured) {
+      clearAccountMemory();
       return true;
     }
 
@@ -348,18 +329,14 @@ export const UsersRepository = {
         await tx.delete(schema.users).where(eq(schema.users.id, userId));
       });
 
+      clearAccountMemory();
       return true;
     } catch (err) {
       if (process.env.NODE_ENV === "production") {
         throw new Error("PERSISTENCE_ERROR: Failed to delete user account transactionally.");
       }
-      console.warn("Database deleteAccount error, falling back to memory store deletion:", err);
-      try {
-        await db.delete(schema.users).where(eq(schema.users.id, userId));
-      } catch {
-        // ignore
-      }
-      return true;
+      console.error("Database deleteAccount error; in-memory state was retained:", err);
+      return false;
     }
   },
 

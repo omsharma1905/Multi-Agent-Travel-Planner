@@ -7,18 +7,12 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { TripsService } from "@/features/trips/service";
-import { travelOrchestrator, OrchestrationResult } from "@/lib/orchestration";
+import { travelOrchestrator } from "@/lib/orchestration";
 import { getAuthenticatedUser } from "@/lib/auth/server";
 import { assertCsrfAllowed } from "@/lib/security/csrf";
 import { enforceRateLimit } from "@/lib/security/rate-limiter";
-
 import { PlanningLockManager } from "@/lib/orchestration/planning-lock";
-
-declare global {
-  var __tripPlanningCache: Map<string, OrchestrationResult> | undefined;
-}
-
-const planningCache = (global.__tripPlanningCache ??= new Map<string, OrchestrationResult>());
+import { planningResultCache } from "@/lib/orchestration/planning-result-cache";
 
 export async function POST(
   req: NextRequest,
@@ -99,29 +93,34 @@ export async function POST(
     }
 
     // Return cached result if already completed and not forced
-    const existing = planningCache.get(tripId);
+    const existing = planningResultCache.get(tripId, user.id);
     if (existing && !shouldForce && existing.status === "completed") {
       PlanningLockManager.release(tripId);
       return NextResponse.json(existing, { status: 200 });
     }
 
     if (trip.plan && !shouldForce && trip.plan.status === "completed") {
-      planningCache.set(tripId, trip.plan);
+      planningResultCache.set(tripId, user.id, trip.plan);
       PlanningLockManager.release(tripId);
       return NextResponse.json(trip.plan, { status: 200 });
     }
 
     try {
       const result = await travelOrchestrator.planTrip(trip);
-      planningCache.set(tripId, result);
 
       // Persist plan and update trip status
-      if (result.status === "completed") {
-        await TripsService.updateTripPlan(tripId, user.id, result, "upcoming");
-      } else {
-        await TripsService.updateTripPlan(tripId, user.id, result, "failed");
+      const persistedTrip = await TripsService.updateTripPlan(
+        tripId,
+        user.id,
+        result,
+        result.status === "completed" ? "upcoming" : "failed",
+      );
+      if (!persistedTrip) {
+        planningResultCache.invalidateTrip(tripId);
+        return NextResponse.json({ error: "Journey not found." }, { status: 404 });
       }
 
+      planningResultCache.set(tripId, user.id, result);
       return NextResponse.json(result, { status: 200 });
     } finally {
       PlanningLockManager.release(tripId);
@@ -161,13 +160,13 @@ export async function GET(
       return NextResponse.json({ status: "in_progress", stage: "running_agents" }, { status: 200 });
     }
 
-    const cached = planningCache.get(tripId);
+    const cached = planningResultCache.get(tripId, user.id);
     if (cached) {
       return NextResponse.json(cached, { status: 200 });
     }
 
     if (trip.plan) {
-      planningCache.set(tripId, trip.plan);
+      planningResultCache.set(tripId, user.id, trip.plan);
       return NextResponse.json(trip.plan, { status: 200 });
     }
 

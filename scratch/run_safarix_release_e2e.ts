@@ -17,8 +17,9 @@ import { spawn } from "child_process";
 import os from "os";
 import path from "path";
 import fs from "fs";
+import { runScratchTest, type ScratchTestFixtures } from "./test-safety";
 
-const BASE_URL = "http://localhost:3000";
+const BASE_URL = process.env.TEST_BASE_URL || "";
 const CHROME_PATH = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
 const CDP_PORT = 9224;
 const USER_DATA_DIR = path.join(os.tmpdir(), `chrome_e2e_profile_${Date.now()}`);
@@ -140,7 +141,8 @@ async function getDebuggerUrl(): Promise<string> {
   });
 }
 
-async function main() {
+async function main(fixtures: ScratchTestFixtures) {
+  fixtures.assertIsolatedDatabase(BASE_URL);
   console.log("=================================================================");
   console.log(" SAFARIX MASTER RELEASE END-TO-END VERIFICATION");
   console.log("=================================================================\n");
@@ -195,6 +197,8 @@ async function main() {
     method: "POST",
     body: testUser,
   });
+  const userId = signUpRes.json?.user?.id;
+  if (typeof userId === "string") fixtures.trackUser(userId);
   check(
     "Auth",
     "Registers new user account",
@@ -300,6 +304,9 @@ async function main() {
   );
 
   const tripId = createTripRes.json?.id;
+  if (typeof tripId === "string" && typeof userId === "string") {
+    fixtures.trackTrip(tripId, userId);
+  }
 
   // 3.3 List Trips
   const listTripsRes = await request("/api/trips", {
@@ -337,6 +344,8 @@ async function main() {
     method: "POST",
     body: strangerUser,
   });
+  const strangerUserId = strangerSignUp.json?.user?.id;
+  if (typeof strangerUserId === "string") fixtures.trackUser(strangerUserId);
   const strangerCookie = extractSessionCookie(strangerSignUp.cookies);
 
   const strangerTripAccess = await request(`/api/trips/${tripId}`, {
@@ -482,7 +491,7 @@ async function main() {
   if (!wsUrl) {
     console.error("Failed to connect to Chrome debugging port!");
     chromeProcess.kill();
-    process.exit(1);
+    throw new Error("Failed to connect to Chrome debugging port.");
   }
 
   const ws = new WebSocket(wsUrl);
@@ -697,11 +706,11 @@ async function main() {
   console.log("=================================================================\n");
 
   if (failed > 0) {
-    process.exit(1);
+    throw new Error(`${failed} release E2E checks failed.`);
   }
 }
 
-main().catch((err) => {
+runScratchTest(main, BASE_URL).catch((err) => {
   console.error("E2E Suite Execution Failed with uncaught error:", err);
   process.exit(1);
 });

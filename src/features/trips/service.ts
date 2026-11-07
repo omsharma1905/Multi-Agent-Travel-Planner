@@ -52,6 +52,15 @@ export const TripsService = {
   },
 
   /**
+   * Atomically persists an edited plan and its immutable version snapshot.
+   */
+  async updateTripPlanAndRecordVersion(
+    params: Parameters<typeof TripsRepository.updateTripPlanAndRecordVersion>[0],
+  ) {
+    return await TripsRepository.updateTripPlanAndRecordVersion(params);
+  },
+
+  /**
    * Updates trip status directly (e.g. marking journey as completed).
    */
   async updateTripStatus(
@@ -116,5 +125,4 @@ export const TripsService = {
     return await TripsRepository.restoreTripVersion(tripId, versionId, userId);
   },
 };
-
 

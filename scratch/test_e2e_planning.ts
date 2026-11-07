@@ -8,18 +8,22 @@ import { TripsRepository } from "../src/features/trips/repository";
 import { TravelOrchestrator } from "../src/lib/orchestration/orchestrator";
 import { db, schema } from "../src/lib/db";
 import { eq } from "drizzle-orm";
+import { randomUUID } from "node:crypto";
+import { runScratchTest, type ScratchTestFixtures } from "./test-safety";
 
-async function runE2EPlanningTest() {
+async function runE2EPlanningTest(fixtures: ScratchTestFixtures) {
   console.log("=== SAFARIX END-TO-END AI PLANNING & PERSISTENCE VERIFICATION ===");
 
+  const fixtureId = randomUUID();
   const user = {
-    id: "usr_veora_demo_01",
+    id: `usr_scratch_${fixtureId}`,
     name: "Elena Rostova",
-    email: "demo@safarix.travel",
+    email: `scratch_${fixtureId}@safarix.test`,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
 
+  fixtures.trackUser(user.id);
   // 1. Create a trip
   console.log("\n[1] Creating trip via TripsService for user:", user.email);
   const trip = await TripsService.createTrip(user, {
@@ -32,6 +36,7 @@ async function runE2EPlanningTest() {
     interests: ["architecture", "culture", "cuisine"],
     notes: "E2E Planning verification expedition",
   });
+  fixtures.trackTrip(trip.id, user.id);
   console.log("✓ Trip created with ID:", trip.id, "Title:", trip.title);
 
   // 2. Direct PostgreSQL Query to prove physical persistence
@@ -159,7 +164,7 @@ async function runE2EPlanningTest() {
   console.log("\n=== ALL END-TO-END PLANNING & PERSISTENCE TESTS PASSED! ===");
 }
 
-runE2EPlanningTest().catch((err) => {
+runScratchTest(runE2EPlanningTest).catch((err) => {
   console.error("E2E Planning Test Failed:", err);
   process.exit(1);
 });

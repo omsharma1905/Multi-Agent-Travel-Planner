@@ -21,6 +21,7 @@ import { createSessionToken, verifySessionToken } from "../src/lib/auth/session"
 import { getAuthenticatedUser } from "../src/lib/auth/server";
 import { db, schema, isDatabaseConfigured } from "../src/lib/db";
 import { eq } from "drizzle-orm";
+import { runScratchTest, type ScratchTestFixtures } from "./test-safety";
 
 let totalTests = 0;
 let passedTests = 0;
@@ -35,7 +36,7 @@ function assert(condition: boolean, message: string) {
   console.log(`✓ [PASS] ${message}`);
 }
 
-async function runSafetySuite() {
+async function runSafetySuite(fixtures: ScratchTestFixtures) {
   console.log("=================================================================");
   console.log(" SAFARIX SSR CACHE SAFETY & INTEGRITY VERIFICATION SUITE");
   console.log("=================================================================\n");
@@ -49,18 +50,18 @@ async function runSafetySuite() {
 
   let tripAId = "";
 
-  try {
-    // -------------------------------------------------------------------------
-    // REQUIREMENT 1: PostgreSQL is the authoritative persistent data source
-    // -------------------------------------------------------------------------
-    console.log("--- Check 1: PostgreSQL Authoritative Persistence ---");
-    const userA = await UsersRepository.createUser({
+  // -------------------------------------------------------------------------
+  // REQUIREMENT 1: PostgreSQL is the authoritative persistent data source
+  // -------------------------------------------------------------------------
+  console.log("--- Check 1: PostgreSQL Authoritative Persistence ---");
+  const userA = await UsersRepository.createUser({
       id: userAId,
       name: "User Alpha",
       email: userAEmail,
       passwordHash: testPasswordHash,
     });
-    assert(userA.id === userAId, "User A created in repository");
+  fixtures.trackUser(userAId);
+  assert(userA.id === userAId, "User A created in repository");
 
     if (isDatabaseConfigured) {
       const dbUserA = await db.query.users.findFirst({
@@ -81,6 +82,7 @@ async function runSafetySuite() {
     };
     const createdTrip = await TripsService.createTrip(userA, tripInput);
     tripAId = createdTrip.id;
+    fixtures.trackTrip(tripAId, userAId);
     assert(createdTrip.userId === userAId, "Trip created under User A");
 
     if (isDatabaseConfigured) {
@@ -222,15 +224,6 @@ async function runSafetySuite() {
     const nonExistentDest = await TripsRepository.getTripDestination("trip_non_existent_9999");
     assert(nonExistentDest === null, "Non-existent trip destination correctly returns null");
 
-  } finally {
-    // Cleanup any lingering records
-    try {
-      if (tripAId) await TripsRepository.deleteTrip(tripAId, userAId);
-      if (userAId) await UsersRepository.deleteUser(userAId);
-      if (userBId) await UsersRepository.deleteUser(userBId);
-    } catch {}
-  }
-
   console.log("\n=================================================================");
   console.log(` SAFETY VERIFICATION COMPLETE: ${passedTests}/${totalTests} TESTS PASSED`);
   if (passedTests === totalTests) {
@@ -241,11 +234,11 @@ async function runSafetySuite() {
   console.log("=================================================================\n");
 
   if (passedTests !== totalTests) {
-    process.exit(1);
+    throw new Error(`SSR cache safety suite failed: ${totalTests - passedTests} checks failed.`);
   }
 }
 
-runSafetySuite().catch((err) => {
+runScratchTest(runSafetySuite).catch((err) => {
   console.error(err);
   process.exit(1);
 });
